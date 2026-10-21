@@ -4,6 +4,8 @@ services:
     runtime: node
     plan: free
     region: frankfurt
+    branch: main
+    autoDeployTrigger: commit
     buildCommand: npm install --include=dev && npm run crawl && npm run build
     startCommand: npm start
     envVars:
