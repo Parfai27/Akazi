@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CompanyMark } from "@/components/company-mark";
 import { JobDescription } from "@/components/job-description";
+import { JobShare } from "@/components/job-share";
 import { ArrowLeftIcon, ExternalIcon } from "@/components/icons";
 import { getJob } from "@/lib/jobs";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
@@ -134,6 +135,7 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
               <ExternalIcon />
             </a>
           ) : null}
+          <JobShare title={job.title} company={job.company} />
         </aside>
       </div>
     </article>

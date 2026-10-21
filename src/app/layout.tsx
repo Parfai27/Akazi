@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ChatWidget } from "@/components/chat-widget";
+import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -37,6 +38,35 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Listings are gathered from public career pages. Akazi does not take applications — you apply on the
                 employer’s site.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href="https://www.instagram.com/akazi.co.rw"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                >
+                  <InstagramIcon />
+                  Instagram
+                </a>
+                <a
+                  href="https://whatsapp.com/channel/0029Vb9t2xE0gcfH3qfJ1J1l"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                >
+                  <WhatsAppIcon />
+                  Channel
+                </a>
+                <a
+                  href="https://chat.whatsapp.com/BMueuqlvheH7QtE63Bjo74"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                >
+                  <WhatsAppIcon />
+                  Group
+                </a>
+              </div>
             </div>
             <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold" aria-label="Footer">
               <Link href="/" className="hover:text-card/70">

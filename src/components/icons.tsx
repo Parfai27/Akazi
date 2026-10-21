@@ -34,6 +34,32 @@ export function ArrowLeftIcon({ className = "size-5" }: { className?: string }) 
   );
 }
 
+export function InstagramIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="4" y="4" width="16" height="16" rx="5" />
+      <circle cx="12" cy="12" r="3.5" />
+      <circle cx="17.2" cy="6.8" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function WhatsAppIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true" fill="currentColor">
+      <path d="M12 3.5a8.3 8.3 0 0 0-7.2 12.4L3.6 20.4l4.6-1.2A8.3 8.3 0 1 0 12 3.5Zm4.4 11.7c-.2.5-1 .9-1.4 1-.4.1-.8.1-1.3-.1-.3-.1-.7-.2-1.2-.4-2.1-.9-3.5-3-3.6-3.1-.1-.2-.9-1.2-.9-2.3s.6-1.6.8-1.8.4-.3.6-.3h.4c.1 0 .3 0 .4.4.2.5.6 1.6.6 1.7.1.1 0 .3-.1.4l-.3.3c-.1.1-.2.2-.1.4.1.2.6 1 1.3 1.6.9.8 1.6 1 1.8 1.1.2.1.3.1.4-.1l.4-.5c.1-.2.3-.1.4-.1h.4c.2 0 .4.1.5.3.1.4.5 1.3.4 1.5Z" />
+    </svg>
+  );
+}
+
+export function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true" fill="currentColor">
+      <path d="M14.2 20.5v-6.8h2.3l.3-2.6h-2.6V9.4c0-.8.2-1.3 1.3-1.3h1.4V5.8c-.2 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.6v2h-2.3v2.6h2.3v6.6h2.9Z" />
+    </svg>
+  );
+}
+
 export function ExternalIcon() {
   return (
     <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
