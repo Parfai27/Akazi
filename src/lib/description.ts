@@ -1,0 +1,64 @@
+const ACRONYMS = new Set(["ALU", "HR", "IT", "CV", "NGO", "UN", "CEO", "GTM", "USA", "UK", "AI", "QA", "EMEA"]);
+
+export type DescriptionBlock = { kind: "heading" | "paragraph"; text: string };
+
+function isHeading(line: string) {
+  if (line.length < 3 || line.length > 72) return false;
+  if (/[.!?]$/.test(line)) return false;
+  if (/^https?:/i.test(line) || /@/.test(line)) return false;
+  const letters = line.replace(/[^A-Za-z]/g, "");
+  if (letters.length < 3) return false;
+  const upper = letters.replace(/[^A-Z]/g, "").length;
+  if (upper / letters.length >= 0.85) return true;
+  const words = line.split(/\s+/);
+  return (
+    words.length <= 6 &&
+    !line.includes(",") &&
+    words.every((word) => /^[A-Z0-9]/.test(word) || /^(and|of|the|for|to|a|in|on|&)$/i.test(word))
+  );
+}
+
+const SMALL_WORDS = new Set(["a", "an", "and", "for", "in", "of", "on", "the", "to"]);
+
+function readableHeading(line: string) {
+  const letters = line.replace(/[^A-Za-z]/g, "");
+  const upper = letters.replace(/[^A-Z]/g, "").length;
+  if (!letters || upper / letters.length < 0.85) return line;
+  let wordIndex = 0;
+  return line
+    .split(/(\s+)/)
+    .map((part) => {
+      const word = part.replace(/[^A-Za-z]/g, "");
+      if (!word) return part;
+      if (ACRONYMS.has(word)) {
+        wordIndex += 1;
+        return part;
+      }
+      const lower = word.toLowerCase();
+      const formatted =
+        wordIndex > 0 && SMALL_WORDS.has(lower)
+          ? lower
+          : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      wordIndex += 1;
+      return formatted;
+    })
+    .join("");
+}
+
+export function descriptionBlocks(text: string): DescriptionBlock[] {
+  const blocks: DescriptionBlock[] = [];
+  for (const chunk of text.split(/\n{2,}/)) {
+    const lines = chunk
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (lines.length === 0) continue;
+    if (isHeading(lines[0])) {
+      blocks.push({ kind: "heading", text: readableHeading(lines[0]) });
+      if (lines.length > 1) blocks.push({ kind: "paragraph", text: lines.slice(1).join("\n") });
+      continue;
+    }
+    blocks.push({ kind: "paragraph", text: lines.join("\n") });
+  }
+  return blocks;
+}

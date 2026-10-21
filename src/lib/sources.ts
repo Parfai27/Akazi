@@ -1,0 +1,92 @@
+export type SourceType = "greenhouse" | "lever" | "jsonld" | "html";
+
+export type JobSource = {
+  id: string;
+  name: string;
+  careerUrl: string;
+  type: SourceType;
+  /**
+   * Greenhouse board token or Lever site name.
+   * Example: boards-api.greenhouse.io/v1/boards/{boardToken}
+   * Example: api.lever.co/v0/postings/{boardToken}
+   */
+  boardToken?: string;
+};
+
+/**
+ * Companies whose public career pages we check.
+ * Add a row to follow another employer. The crawl picks it up on the next run.
+ *
+ * type:
+ * - greenhouse: boardToken is the token in boards-api.greenhouse.io/v1/boards/{token}/jobs
+ * - lever: boardToken is the site name in api.lever.co/v0/postings/{token}
+ * - jsonld: careerUrl is a page with schema.org JobPosting JSON-LD, or a listing
+ *   that links to pages containing that markup
+ * - html: careerUrl is a listing page with no feed; job titles are read from the HTML
+ *
+ * Example:
+ * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
+ */
+export const jobSources: JobSource[] = [
+  {
+    id: "one-acre-fund-rwanda",
+    name: "One Acre Fund Rwanda",
+    careerUrl: "https://job-boards.greenhouse.io/oneacrefundrwanda",
+    type: "greenhouse",
+    boardToken: "oneacrefundrwanda",
+  },
+  {
+    id: "alx-africa",
+    name: "ALX Africa",
+    careerUrl: "https://job-boards.greenhouse.io/alxafrica",
+    type: "greenhouse",
+    boardToken: "alxafrica",
+  },
+  {
+    id: "african-leadership-university",
+    name: "African Leadership University",
+    careerUrl: "https://job-boards.greenhouse.io/alu",
+    type: "greenhouse",
+    boardToken: "alu",
+  },
+  {
+    id: "zipline",
+    name: "Zipline",
+    careerUrl: "https://job-boards.greenhouse.io/flyzipline",
+    type: "greenhouse",
+    boardToken: "flyzipline",
+  },
+  {
+    id: "world-relief",
+    name: "World Relief",
+    careerUrl: "https://jobs.lever.co/wr",
+    type: "lever",
+    boardToken: "wr",
+  },
+  {
+    id: "bridge-talent",
+    name: "BRIDGE Talent Services",
+    careerUrl: "https://jobs.lever.co/bridge2rwanda",
+    type: "lever",
+    boardToken: "bridge2rwanda",
+  },
+  {
+    id: "global-health-corps",
+    name: "Global Health Corps",
+    careerUrl: "https://jobs.lever.co/ghcorps",
+    type: "lever",
+    boardToken: "ghcorps",
+  },
+  {
+    id: "zenysis",
+    name: "Zenysis",
+    careerUrl: "https://join.com/companies/zenysiscom",
+    type: "jsonld",
+  },
+  {
+    id: "laterite",
+    name: "Laterite",
+    careerUrl: "https://www.laterite.com/vacancies/",
+    type: "html",
+  },
+];

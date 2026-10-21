@@ -1,0 +1,213 @@
+import { and, eq, notInArray } from "drizzle-orm";
+import { db } from "../../db";
+import { crawlRuns, jobs, sources } from "../../db/schema";
+import { jobSources, type JobSource } from "../sources";
+import { classifyPosting } from "../tag";
+import { extractDeadline } from "../url";
+import { notifyNewJobs } from "../alerts";
+import { readGreenhouse } from "./greenhouse";
+import { readHtml } from "./html";
+import { readJsonLd } from "./jsonld";
+import { readLever } from "./lever";
+import type { RawJob } from "./types";
+
+const DESCRIPTION_LIMIT = 20000;
+
+type StoredJob = RawJob & {
+  workMode: "remote" | "hybrid" | "onsite";
+  place: "kigali" | "rwanda" | "remote";
+};
+
+async function readSource(source: JobSource): Promise<RawJob[]> {
+  if (source.type === "greenhouse") {
+    if (!source.boardToken) throw new Error("Missing Greenhouse board token");
+    return readGreenhouse(source.boardToken);
+  }
+  if (source.type === "lever") {
+    if (!source.boardToken) throw new Error("Missing Lever site name");
+    return readLever(source.boardToken);
+  }
+  if (source.type === "jsonld") return readJsonLd(source.careerUrl);
+  return readHtml(source.careerUrl);
+}
+
+function keepRelevant(raw: RawJob): StoredJob | null {
+  const title = raw.title.trim();
+  if (!title) return null;
+  const description = raw.description.slice(0, DESCRIPTION_LIMIT);
+  const classified = classifyPosting({
+    title,
+    location: raw.location,
+    description,
+    hint: raw.hint,
+  });
+  if (!classified.relevant) return null;
+  const deadlineAt = raw.deadlineAt ?? extractDeadline(`${title}\n${description}`);
+  return { ...raw, title, description, deadlineAt, workMode: classified.workMode, place: classified.place };
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function syncSources() {
+  for (const source of jobSources) {
+    db.insert(sources)
+      .values({
+        id: source.id,
+        name: source.name,
+        careerUrl: source.careerUrl,
+        type: source.type,
+        boardToken: source.boardToken ?? null,
+      })
+      .onConflictDoUpdate({
+        target: sources.id,
+        set: {
+          name: source.name,
+          careerUrl: source.careerUrl,
+          type: source.type,
+          boardToken: source.boardToken ?? null,
+        },
+      })
+      .run();
+  }
+}
+
+function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string) {
+  const seenIds: string[] = [];
+  const createdIds: number[] = [];
+
+  db.transaction((tx) => {
+    for (const opening of openings) {
+      seenIds.push(opening.externalId);
+      const existing = tx
+        .select({ id: jobs.id })
+        .from(jobs)
+        .where(and(eq(jobs.sourceId, source.id), eq(jobs.externalId, opening.externalId)))
+        .get();
+
+      if (existing) {
+        tx.update(jobs)
+          .set({
+            title: opening.title,
+            company: source.name,
+            location: opening.location,
+            workMode: opening.workMode,
+            place: opening.place,
+            description: opening.description,
+            applyUrl: opening.applyUrl,
+            sourceUrl: opening.sourceUrl,
+            postedAt: opening.postedAt,
+            deadlineAt: opening.deadlineAt ?? null,
+            lastSeenAt: seenAt,
+            isActive: true,
+          })
+          .where(eq(jobs.id, existing.id))
+          .run();
+        continue;
+      }
+
+      const inserted = tx
+        .insert(jobs)
+        .values({
+          sourceId: source.id,
+          externalId: opening.externalId,
+          title: opening.title,
+          company: source.name,
+          location: opening.location,
+          workMode: opening.workMode,
+          place: opening.place,
+          description: opening.description,
+          applyUrl: opening.applyUrl,
+          sourceUrl: opening.sourceUrl,
+          postedAt: opening.postedAt,
+          deadlineAt: opening.deadlineAt ?? null,
+          firstSeenAt: seenAt,
+          lastSeenAt: seenAt,
+          isActive: true,
+          isNew: true,
+        })
+        .run();
+      createdIds.push(Number(inserted.lastInsertRowid));
+    }
+
+    const missing = and(eq(jobs.sourceId, source.id), eq(jobs.isActive, true));
+    if (seenIds.length === 0) {
+      tx.update(jobs).set({ isActive: false }).where(missing).run();
+    } else {
+      tx.update(jobs)
+        .set({ isActive: false })
+        .where(and(missing, notInArray(jobs.externalId, seenIds)))
+        .run();
+    }
+  });
+
+  return createdIds;
+}
+
+export async function crawlAll() {
+  syncSources();
+  const startedAt = new Date().toISOString();
+  const inserted = db
+    .insert(crawlRuns)
+    .values({
+      startedAt,
+      sourcesChecked: 0,
+      jobsSeen: 0,
+      jobsNew: 0,
+      status: "running",
+    })
+    .run();
+  const runId = Number(inserted.lastInsertRowid);
+
+  const notes: string[] = [];
+  let jobsSeen = 0;
+  let jobsNew = 0;
+  let failures = 0;
+  const newJobIds: number[] = [];
+
+  for (const source of jobSources) {
+    try {
+      const raw = await readSource(source);
+      const relevant: StoredJob[] = [];
+      const seen = new Set<string>();
+      for (const job of raw) {
+        const kept = keepRelevant(job);
+        if (!kept || seen.has(kept.externalId)) continue;
+        seen.add(kept.externalId);
+        relevant.push(kept);
+      }
+      const createdIds = saveSourceJobs(source, relevant, new Date().toISOString());
+      jobsSeen += relevant.length;
+      jobsNew += createdIds.length;
+      newJobIds.push(...createdIds);
+      notes.push(`${source.name}: ${relevant.length} open, ${createdIds.length} new`);
+    } catch (error) {
+      failures += 1;
+      notes.push(`${source.name}: ${errorMessage(error)}`);
+    }
+  }
+
+  try {
+    const alertNote = await notifyNewJobs(newJobIds);
+    if (alertNote) notes.push(alertNote);
+  } catch (error) {
+    notes.push(`Alerts: ${errorMessage(error)}`);
+  }
+
+  const status = failures === 0 ? "ok" : failures === jobSources.length ? "error" : "partial";
+  db.update(crawlRuns)
+    .set({
+      finishedAt: new Date().toISOString(),
+      sourcesChecked: jobSources.length,
+      jobsSeen,
+      jobsNew,
+      status,
+      notes: notes.join("\n").slice(0, 4000),
+    })
+    .where(eq(crawlRuns.id, runId))
+    .run();
+
+  return { status, jobsSeen, jobsNew, failures, notes };
+}

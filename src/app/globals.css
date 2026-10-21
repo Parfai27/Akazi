@@ -1,0 +1,44 @@
+@import "tailwindcss";
+/* jobio-inspired board */
+
+:root {
+  --paper: #ffffff;
+  --wash: #f2f7f5;
+  --ink: #171a21;
+  --forest: #1e6b58;
+  --forest-deep: #174f42;
+  --clay: #b45309;
+  --clay-deep: #92400e;
+  --line: #e3ebe7;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --chip: #e4f2ec;
+  --amber: #fff4dc;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-wash: var(--wash);
+  --color-ink: var(--ink);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-clay: var(--clay);
+  --color-clay-deep: var(--clay-deep);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-chip: var(--chip);
+  --color-amber: var(--amber);
+  --font-sans: var(--font-outfit);
+  --font-serif: var(--font-outfit);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-outfit), "Segoe UI", sans-serif;
+}
+
+::selection {
+  background: #cfe6dc;
+}
