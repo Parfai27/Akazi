@@ -6,7 +6,7 @@ services:
     region: frankfurt
     branch: main
     autoDeployTrigger: commit
-    buildCommand: npm install --include=dev && npm run crawl && npm run build
+    buildCommand: npm install --include=dev && npm run crawl && rm -rf .next && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
