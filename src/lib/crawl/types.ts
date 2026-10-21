@@ -8,4 +8,5 @@ export type RawJob = {
   postedAt: string | null;
   deadlineAt?: string | null;
   hint?: "remote" | "hybrid" | "onsite";
+  company?: string;
 };

@@ -2,13 +2,14 @@ import { and, eq, notInArray } from "drizzle-orm";
 import { db } from "../../db";
 import { crawlRuns, jobs, sources } from "../../db/schema";
 import { jobSources, type JobSource } from "../sources";
-import { classifyPosting } from "../tag";
+import { classifyPosting, mentionsRwanda } from "../tag";
 import { extractDeadline } from "../url";
 import { notifyNewJobs } from "../alerts";
 import { readGreenhouse } from "./greenhouse";
 import { readHtml } from "./html";
 import { readJsonLd } from "./jsonld";
 import { readLever } from "./lever";
+import { readMifotra } from "./mifotra";
 import type { RawJob } from "./types";
 
 const DESCRIPTION_LIMIT = 20000;
@@ -28,10 +29,11 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
     return readLever(source.boardToken);
   }
   if (source.type === "jsonld") return readJsonLd(source.careerUrl);
+  if (source.type === "mifotra") return readMifotra();
   return readHtml(source.careerUrl);
 }
 
-function keepRelevant(raw: RawJob): StoredJob | null {
+function keepRelevant(raw: RawJob, source: JobSource): StoredJob | null {
   const title = raw.title.trim();
   if (!title) return null;
   const description = raw.description.slice(0, DESCRIPTION_LIMIT);
@@ -41,7 +43,8 @@ function keepRelevant(raw: RawJob): StoredJob | null {
     description,
     hint: raw.hint,
   });
-  if (!classified.relevant) return null;
+  const namedInRwanda = mentionsRwanda(`${raw.location}\n${title}`);
+  if (source.scope === "rwanda" ? !namedInRwanda : !classified.relevant) return null;
   const deadlineAt = raw.deadlineAt ?? extractDeadline(`${title}\n${description}`);
   return { ...raw, title, description, deadlineAt, workMode: classified.workMode, place: classified.place };
 }
@@ -91,7 +94,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
         tx.update(jobs)
           .set({
             title: opening.title,
-            company: source.name,
+            company: opening.company?.trim() || source.name,
             location: opening.location,
             workMode: opening.workMode,
             place: opening.place,
@@ -114,7 +117,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
           sourceId: source.id,
           externalId: opening.externalId,
           title: opening.title,
-          company: source.name,
+          company: opening.company?.trim() || source.name,
           location: opening.location,
           workMode: opening.workMode,
           place: opening.place,
@@ -173,7 +176,7 @@ export async function crawlAll() {
       const relevant: StoredJob[] = [];
       const seen = new Set<string>();
       for (const job of raw) {
-        const kept = keepRelevant(job);
+        const kept = keepRelevant(job, source);
         if (!kept || seen.has(kept.externalId)) continue;
         seen.add(kept.externalId);
         relevant.push(kept);

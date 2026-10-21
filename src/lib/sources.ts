@@ -1,4 +1,4 @@
-export type SourceType = "greenhouse" | "lever" | "jsonld" | "html";
+export type SourceType = "greenhouse" | "lever" | "jsonld" | "html" | "mifotra";
 
 export type JobSource = {
   id: string;
@@ -11,6 +11,10 @@ export type JobSource = {
    * Example: api.lever.co/v0/postings/{boardToken}
    */
   boardToken?: string;
+  /**
+   * On a worldwide board, keep a role only when its title or location names Rwanda.
+   */
+  scope?: "rwanda";
 };
 
 /**
@@ -23,6 +27,7 @@ export type JobSource = {
  * - jsonld: careerUrl is a page with schema.org JobPosting JSON-LD, or a listing
  *   that links to pages containing that markup
  * - html: careerUrl is a listing page with no feed; job titles are read from the HTML
+ * - mifotra: the public Rwanda civil-service portal. No board token.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -88,5 +93,19 @@ export const jobSources: JobSource[] = [
     name: "Laterite",
     careerUrl: "https://www.laterite.com/vacancies/",
     type: "html",
+  },
+  {
+    id: "one-acre-fund",
+    name: "One Acre Fund",
+    careerUrl: "https://job-boards.greenhouse.io/oneacrefund",
+    type: "greenhouse",
+    boardToken: "oneacrefund",
+    scope: "rwanda",
+  },
+  {
+    id: "government-of-rwanda",
+    name: "Government of Rwanda",
+    careerUrl: "https://recruitment.mifotra.gov.rw/Vacancies",
+    type: "mifotra",
   },
 ];
