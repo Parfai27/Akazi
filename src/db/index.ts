@@ -97,4 +97,8 @@ function getSqlite() {
   return globalForDb.sqlite;
 }
 
+export function checkpointDatabase() {
+  getSqlite().pragma("wal_checkpoint(TRUNCATE)");
+}
+
 export const db = drizzle(getSqlite(), { schema });

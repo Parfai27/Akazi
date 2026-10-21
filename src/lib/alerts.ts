@@ -16,7 +16,7 @@ export function mailConfigured() {
 }
 
 function siteUrl() {
-  return (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
 async function deliver(to: string, subject: string, text: string) {
