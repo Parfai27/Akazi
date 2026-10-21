@@ -52,14 +52,6 @@ export function WhatsAppIcon() {
   );
 }
 
-export function FacebookIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true" fill="currentColor">
-      <path d="M14.2 20.5v-6.8h2.3l.3-2.6h-2.6V9.4c0-.8.2-1.3 1.3-1.3h1.4V5.8c-.2 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.6v2h-2.3v2.6h2.3v6.6h2.9Z" />
-    </svg>
-  );
-}
-
 export function ExternalIcon() {
   return (
     <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">

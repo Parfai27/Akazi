@@ -42,7 +42,7 @@ export default function Home(props: { searchParams: Promise<Search> }) {
 
 async function Board({ searchParams }: { searchParams: Promise<Search> }) {
   const filters = filtersFrom(await searchParams);
-  const { openings, closingSoon, shelfCounts, functionCounts, companies } = await getBoard(filters);
+  const { openings, closingSoon, shelfCounts, functionCounts } = await getBoard(filters);
   const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company);
   const showClosing = !filtering && closingSoon.length > 0;
   const closingIds = new Set(showClosing ? closingSoon.map((job) => job.id) : []);
@@ -98,20 +98,6 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
             </FilterChip>
           ))}
         </div>
-
-        {companies.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {companies.map(([name, count]) => (
-              <FilterChip
-                key={name}
-                href={boardHref(filters, { company: filters.company === name ? "" : name })}
-                active={filters.company === name}
-              >
-                {name} {count}
-              </FilterChip>
-            ))}
-          </div>
-        ) : null}
 
         <p className="mt-8 text-sm text-muted">
           {openings.length} open {openings.length === 1 ? "role" : "roles"}

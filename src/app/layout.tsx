@@ -14,6 +14,9 @@ const outfit = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, ""),
+  ),
   title: {
     default: "Akazi — jobs in Rwanda",
     template: "%s · Akazi",

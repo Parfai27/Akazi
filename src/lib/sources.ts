@@ -1,4 +1,4 @@
-export type SourceType = "greenhouse" | "lever" | "jsonld" | "html" | "mifotra";
+export type SourceType = "greenhouse" | "lever" | "jsonld" | "html" | "mifotra" | "migration";
 
 export type JobSource = {
   id: string;
@@ -28,6 +28,8 @@ export type JobSource = {
  *   that links to pages containing that markup
  * - html: careerUrl is a listing page with no feed; job titles are read from the HTML
  * - mifotra: the public Rwanda civil-service portal. No board token.
+ * - migration: the Directorate General of Immigration and Emigration career page.
+ *   Roles that share a deadline are stored as one opening.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -107,5 +109,11 @@ export const jobSources: JobSource[] = [
     name: "Government of Rwanda",
     careerUrl: "https://recruitment.mifotra.gov.rw/Vacancies",
     type: "mifotra",
+  },
+  {
+    id: "migration-office",
+    name: "Directorate General of Immigration and Emigration",
+    careerUrl: "https://careers.migration.gov.rw/",
+    type: "migration",
   },
 ];

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FacebookIcon, WhatsAppIcon } from "@/components/icons";
+import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
 
 export function JobShare({ title, company }: { title: string; company: string }) {
   const [pageUrl, setPageUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [instagramCopied, setInstagramCopied] = useState(false);
 
   useEffect(() => {
     setPageUrl(window.location.href);
@@ -13,7 +14,22 @@ export function JobShare({ title, company }: { title: string; company: string })
 
   const message = `${title} at ${company}`;
   const whatsapp = pageUrl ? `https://wa.me/?text=${encodeURIComponent(`${message}\n${pageUrl}`)}` : undefined;
-  const facebook = pageUrl ? `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}` : undefined;
+
+  async function shareInstagram() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: message, text: message, url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    await navigator.clipboard.writeText(url);
+    setInstagramCopied(true);
+    window.setTimeout(() => setInstagramCopied(false), 2000);
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  }
 
   async function copyLink() {
     const url = window.location.href;
@@ -35,15 +51,14 @@ export function JobShare({ title, company }: { title: string; company: string })
           <WhatsAppIcon />
           WhatsApp
         </a>
-        <a
-          href={facebook}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#1877F2] px-3 text-sm font-semibold text-white hover:brightness-95"
+        <button
+          type="button"
+          onClick={shareInstagram}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[linear-gradient(45deg,#f9ce34,#ee2a7b_55%,#6228d7)] px-3 text-sm font-semibold text-white hover:brightness-95"
         >
-          <FacebookIcon />
-          Facebook
-        </a>
+          <InstagramIcon />
+          {instagramCopied ? "Link copied" : "Instagram"}
+        </button>
       </div>
       <button
         type="button"

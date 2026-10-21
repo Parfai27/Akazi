@@ -19,6 +19,37 @@ function isHeading(line: string) {
 }
 
 const SMALL_WORDS = new Set(["a", "an", "and", "for", "in", "of", "on", "the", "to"]);
+const SECTION_LABELS = [
+  "duties and responsibilities",
+  "key responsibilities",
+  "minimum qualifications",
+  "required qualifications",
+  "job purpose",
+];
+
+function titleCaseLabel(label: string) {
+  return label
+    .split(/\s+/)
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      if (index > 0 && SMALL_WORDS.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function liftSectionLabels(text: string) {
+  const names = SECTION_LABELS.join("|");
+  return text.replace(new RegExp(`(?:^|[\\n.;])\\s*(${names})\\s*:`, "gi"), (match, label: string) => {
+    const lead = /^[.;]/.test(match) ? match.charAt(0) : "";
+    return `${lead}\n\n${titleCaseLabel(label)}\n\n`;
+  });
+}
+
+function looksLikeDutyList(text: string) {
+  if (/(^|\n)\s*(?:[•\-*]|\d+[\).]|[a-z][\).])\s+\S/i.test(text)) return true;
+  return /;\s*\d+[\).]\s+\S/.test(text);
+}
 
 function readableHeading(line: string) {
   const letters = line.replace(/[^A-Za-z]/g, "");
@@ -46,8 +77,9 @@ function readableHeading(line: string) {
 }
 
 export function descriptionBlocks(text: string): DescriptionBlock[] {
+  const prepared = liftSectionLabels(text).replace(/;\s+(?=\d+[\).]\s)/g, ";\n");
   const blocks: DescriptionBlock[] = [];
-  for (const chunk of text.split(/\n{2,}/)) {
+  for (const chunk of prepared.split(/\n{2,}/)) {
     const lines = chunk
       .split("\n")
       .map((line) => line.trim())
@@ -59,6 +91,9 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
       continue;
     }
     blocks.push({ kind: "paragraph", text: lines.join("\n") });
+  }
+  if (blocks[0]?.kind !== "heading" && looksLikeDutyList(text)) {
+    blocks.unshift({ kind: "heading", text: "Duties and responsibilities" });
   }
   return blocks;
 }
