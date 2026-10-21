@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
-import Script from "next/script";
 import { Suspense } from "react";
 import { ChatWidget } from "@/components/chat-widget";
 import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
@@ -31,6 +30,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   const ads = adConfig();
   return (
     <html lang="en" className={`${outfit.variable} h-full antialiased`}>
+      {ads ? (
+        <head>
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads.client}`}
+            crossOrigin="anonymous"
+          />
+        </head>
+      ) : null}
       <body className="flex min-h-full flex-col text-ink">
         <Suspense fallback={<div className="h-[8.25rem] border-b border-line bg-card md:h-[4.5rem]" />}>
           <SiteHeader />
@@ -100,14 +108,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </p>
         </footer>
         <ChatWidget />
-        {ads ? (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads.client}`}
-            crossOrigin="anonymous"
-            strategy="beforeInteractive"
-          />
-        ) : null}
       </body>
     </html>
   );
