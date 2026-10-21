@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { AdSlot } from "@/components/ad-slot";
 import { JobCard } from "@/components/job-card";
+import { adConfig } from "@/lib/ads";
 import { getBoard, type JobFilters } from "@/lib/jobs";
 import { JOB_FUNCTIONS, SHELVES } from "@/lib/organize";
 
@@ -43,6 +45,7 @@ export default function Home(props: { searchParams: Promise<Search> }) {
 async function Board({ searchParams }: { searchParams: Promise<Search> }) {
   const filters = filtersFrom(await searchParams);
   const { openings, closingSoon, shelfCounts, functionCounts } = await getBoard(filters);
+  const ads = adConfig();
   const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company);
   const showClosing = !filtering && closingSoon.length > 0;
   const closingIds = new Set(showClosing ? closingSoon.map((job) => job.id) : []);
@@ -113,6 +116,8 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
             <span> · sorted by deadline, then by date posted</span>
           )}
         </p>
+
+        {ads?.slot ? <AdSlot client={ads.client} slot={ads.slot} /> : null}
 
         {openings.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-line bg-card px-5 py-10 text-muted">

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { AdSlot } from "@/components/ad-slot";
 import { CompanyMark } from "@/components/company-mark";
 import { JobDescription } from "@/components/job-description";
 import { JobShare } from "@/components/job-share";
 import { ArrowLeftIcon, ExternalIcon } from "@/components/icons";
+import { adConfig } from "@/lib/ads";
 import { getJob } from "@/lib/jobs";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
 import { placeLabel, workModeLabel } from "@/lib/tag";
@@ -43,6 +45,7 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
   const mode = workModeLabel(job.workMode);
   const showPlace = place.toLowerCase() !== mode.toLowerCase();
   const showLocation = Boolean(job.location && !/^(remote|hybrid|on-?site)$/i.test(job.location.trim()));
+  const ads = adConfig();
 
   return (
     <article>
@@ -89,6 +92,8 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
               The career page did not include a description. Open the employer’s posting for the full text.
             </p>
           )}
+
+          {ads?.slot ? <AdSlot client={ads.client} slot={ads.slot} /> : null}
 
           <p className="mt-10 border-t border-line pt-4 text-sm leading-6 text-muted">
             Collected from {job.company}’s public career page.

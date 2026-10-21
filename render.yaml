@@ -13,3 +13,7 @@ services:
         value: "22"
       - key: ADMIN_PASSWORD
         generateValue: true
+      - key: ADSENSE_CLIENT
+        value: ca-pub-5649671721567993
+      - key: ADSENSE_SLOT
+        sync: false

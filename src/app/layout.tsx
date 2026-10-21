@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
+import Script from "next/script";
 import { Suspense } from "react";
 import { ChatWidget } from "@/components/chat-widget";
 import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { SiteHeader } from "@/components/site-header";
+import { adConfig } from "@/lib/ads";
 import "./globals.css";
 
 const outfit = Plus_Jakarta_Sans({
@@ -26,6 +28,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const ads = adConfig();
   return (
     <html lang="en" className={`${outfit.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col text-ink">
@@ -87,6 +90,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/alerts" className="hover:text-card/70">
                 Alerts
               </Link>
+              <Link href="/privacy" className="hover:text-card/70">
+                Privacy
+              </Link>
             </nav>
           </div>
           <p className="mx-auto w-full max-w-6xl border-t border-card/15 px-4 py-4 text-xs text-card/60 sm:px-6">
@@ -94,6 +100,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </p>
         </footer>
         <ChatWidget />
+        {ads ? (
+          <Script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ads.client}`}
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        ) : null}
       </body>
     </html>
   );
