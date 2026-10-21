@@ -2,6 +2,8 @@
 
 Openings in Rwanda, gathered from public company career pages. Browse on Akazi, then apply on the employer’s site.
 
+Live site: https://akazi-u968.onrender.com
+
 ## Run it locally
 
 ```bash
