@@ -12,6 +12,7 @@ import {
   type JobFunction,
   type Shelf,
 } from "@/lib/organize";
+import { restoreStudyRecords } from "@/lib/record-log";
 
 export type JobFilters = {
   q?: string;
@@ -86,6 +87,7 @@ export async function getJob(id: number): Promise<JobRecord | null> {
 
 export async function getAdminSnapshot() {
   await io();
+  await restoreStudyRecords();
   const fresh = db
     .select()
     .from(jobs)

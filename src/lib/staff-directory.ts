@@ -1,6 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { functionLabel, jobFunction } from "@/lib/organize";
+import { loadKeptMail, restoreStudyRecords, type KeptMail } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits } from "@/lib/visit-log";
 
 export type OpeningRow = {
@@ -63,6 +64,7 @@ type JobSql = {
 
 export async function getOpeningRows(): Promise<OpeningRow[]> {
   await io();
+  await restoreStudyRecords();
   const jobs = sqlite()
     .prepare(
       `SELECT id, title, company, deadline_at AS deadlineAt, is_active AS isActive, is_new AS isNew
@@ -96,6 +98,7 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
 
 export async function getAlertRows(): Promise<AlertRow[]> {
   await io();
+  await restoreStudyRecords();
   const rows = sqlite()
     .prepare(
       `SELECT id, name, email, studies, created_at AS createdAt, length(cv_text) AS cvLength
@@ -133,8 +136,33 @@ export async function getSourceRows(): Promise<SourceRow[]> {
     .sort((a, b) => b.openCount - a.openCount || a.name.localeCompare(b.name));
 }
 
+function mailFromKept(kept: KeptMail[]) {
+  const people = sqlite().prepare("SELECT name, email FROM subscribers").all() as { name: string; email: string }[];
+  const byEmail = new Map(people.map((person) => [person.email, person.name]));
+  const summary = { sent: 0, queued: 0, failed: 0 };
+  for (const item of kept) {
+    if (item.status === "sent" || item.status === "queued" || item.status === "failed") summary[item.status] += 1;
+  }
+  const rows = [...kept]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 40)
+    .map((item, index) => ({
+      id: index + 1,
+      name: byEmail.get(item.email) || item.email,
+      email: item.email,
+      title: item.title || "Role no longer stored",
+      status: item.status,
+      detail: item.detail,
+      createdAt: item.createdAt,
+    }));
+  return { summary, rows };
+}
+
 export async function getMailLog(): Promise<{ summary: MailSummary; rows: MailRow[] }> {
   await io();
+  await restoreStudyRecords();
+  const kept = await loadKeptMail();
+  if (kept) return mailFromKept(kept);
   const counts = sqlite()
     .prepare("SELECT status, COUNT(*) AS total FROM notifications GROUP BY status")
     .all() as { status: string; total: number }[];

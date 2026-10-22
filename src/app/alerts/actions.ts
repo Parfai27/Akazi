@@ -5,6 +5,7 @@ import { extractText } from "unpdf";
 import { db } from "@/db";
 import { subscribers } from "@/db/schema";
 import { mailConfigured, matchSubscriber } from "@/lib/alerts";
+import { rememberSubscriber } from "@/lib/record-log";
 
 export type AlertState = {
   error?: string;
@@ -74,6 +75,8 @@ export async function subscribe(_prev: AlertState, formData: FormData): Promise<
     subscriberId = Number(inserted.lastInsertRowid);
   }
 
+  const stored = db.select().from(subscribers).where(eq(subscribers.id, subscriberId!)).get();
+  if (stored) await rememberSubscriber(stored);
   const result = await matchSubscriber(subscriberId!);
   return {
     ok: true,

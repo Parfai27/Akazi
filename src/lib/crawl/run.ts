@@ -5,6 +5,7 @@ import { jobSources, type JobSource } from "../sources";
 import { classifyPosting, mentionsRwanda } from "../tag";
 import { extractDeadline } from "../url";
 import { notifyNewJobs } from "../alerts";
+import { restoreStudyRecords } from "../record-log";
 import { readGreenhouse } from "./greenhouse";
 import { readHtml } from "./html";
 import { readJsonLd } from "./jsonld";
@@ -97,7 +98,7 @@ function syncSources() {
   }
 }
 
-function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string) {
+function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string, reviewed: Set<string>) {
   const seenIds: string[] = [];
   const createdIds: number[] = [];
 
@@ -131,6 +132,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
         continue;
       }
 
+      const alreadyReviewed = reviewed.has(`${source.id}\t${opening.externalId}`);
       const inserted = tx
         .insert(jobs)
         .values({
@@ -149,10 +151,10 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
           firstSeenAt: seenAt,
           lastSeenAt: seenAt,
           isActive: true,
-          isNew: true,
+          isNew: !alreadyReviewed,
         })
         .run();
-      createdIds.push(Number(inserted.lastInsertRowid));
+      if (!alreadyReviewed) createdIds.push(Number(inserted.lastInsertRowid));
     }
 
     const missing = and(eq(jobs.sourceId, source.id), eq(jobs.isActive, true));
@@ -171,6 +173,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
 
 export async function crawlAll(options?: { notify?: boolean }) {
   syncSources();
+  const reviewed = await restoreStudyRecords();
   const startedAt = new Date().toISOString();
   const inserted = db
     .insert(crawlRuns)
@@ -201,7 +204,7 @@ export async function crawlAll(options?: { notify?: boolean }) {
         seen.add(kept.externalId);
         relevant.push(kept);
       }
-      const createdIds = saveSourceJobs(source, relevant, new Date().toISOString());
+      const createdIds = saveSourceJobs(source, relevant, new Date().toISOString(), reviewed);
       jobsSeen += relevant.length;
       jobsNew += createdIds.length;
       newJobIds.push(...createdIds);
@@ -212,6 +215,7 @@ export async function crawlAll(options?: { notify?: boolean }) {
     }
   }
 
+  await restoreStudyRecords();
   if (options?.notify !== false) {
     try {
       const alertNote = await notifyNewJobs(newJobIds);

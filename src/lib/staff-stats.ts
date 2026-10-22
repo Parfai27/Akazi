@@ -1,6 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
+import { restoreStudyRecords } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits, rememberVisit } from "@/lib/visit-log";
 
 const ZONE = "Africa/Kigali";
@@ -101,6 +102,7 @@ export async function recordVisit(visitor: string, path: string) {
 
 export async function getStaffStats(): Promise<StaffStats> {
   await io();
+  await restoreStudyRecords();
   const today = kigaliDay();
   const weekStart = mondayOf(today);
   const monthStart = `${today.slice(0, 7)}-01`;

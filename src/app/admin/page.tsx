@@ -190,7 +190,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
       </section>
 
       <p className="text-xs leading-5 text-muted">
-        Visit counts are kept when the site restarts. Alert signups are stored on this server and can be cleared when it is rebuilt.
+        Visit counts, signup records, mail history, and reviewed openings are kept when the site is rebuilt.
       </p>
     </div>
   );

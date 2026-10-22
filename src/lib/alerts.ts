@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { db } from "../db";
 import { jobs, notifications, subscribers, type JobRecord, type SubscriberRecord } from "../db/schema";
 import { matchesProfile } from "./match";
+import { rememberMail } from "./record-log";
 import { deadlineLabel } from "./url";
 
 export type AlertResult = {
@@ -79,6 +80,25 @@ function remember(subscriberId: number, jobId: number, status: string, detail: s
       set: { status, detail },
     })
     .run();
+}
+
+async function rememberKept(
+  person: Pick<SubscriberRecord, "email">,
+  job: Pick<JobRecord, "sourceId" | "externalId" | "title" | "company">,
+  status: string,
+  detail: string | null,
+  now: string,
+) {
+  await rememberMail({
+    email: person.email,
+    sourceId: job.sourceId,
+    externalId: job.externalId,
+    title: job.title,
+    company: job.company,
+    status,
+    detail: detail ?? "",
+    createdAt: now,
+  });
 }
 
 function subjectLine(openings: JobRecord[]) {
@@ -245,6 +265,7 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
       const detail = error instanceof Error ? error.message : String(error);
       for (const job of openings) {
         remember(person.id, job.id, "failed", detail.slice(0, 300), now);
+        await rememberKept(person, job, "failed", detail.slice(0, 300), now);
       }
       return { matched: openings.length, sent: 0, queued: 0 };
     }
@@ -253,7 +274,9 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
   }
 
   for (const job of openings) {
-    remember(person.id, job.id, ready ? "sent" : "queued", null, now);
+    const status = ready ? "sent" : "queued";
+    remember(person.id, job.id, status, null, now);
+    await rememberKept(person, job, status, null, now);
   }
   return { matched: openings.length, sent, queued };
 }
@@ -334,12 +357,14 @@ export async function flushQueuedAlerts() {
         .set({ status: "sent", detail: null })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
         .run();
+      for (const job of openings) await rememberKept(person, job, "sent", null, new Date().toISOString());
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       db.update(notifications)
         .set({ status: "failed", detail: detail.slice(0, 300) })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
         .run();
+      for (const job of openings) await rememberKept(person, job, "failed", detail.slice(0, 300), new Date().toISOString());
     }
   }
 }
