@@ -59,8 +59,7 @@ function wordsOf(line: string) {
 function isHeading(line: string) {
   if (line.length < 3 || line.length > 80) return false;
   if (/[.!?]$/.test(line)) return false;
-  if (/^https?:/i.test(line) || /@/.test(line)) return false;
-  if (/^[-•*]/.test(line)) return false;
+  if (/^https?:/i.test(line) || /@/.test(line) || isBullet(line)) return false;
   const letters = line.replace(/[^A-Za-z]/g, "");
   if (letters.length < 3) return false;
   const upper = letters.replace(/[^A-Z]/g, "").length;
@@ -104,8 +103,12 @@ function knownLabel(line: string): { kind: "heading" | "field"; label: string; r
   return null;
 }
 
+function isBullet(line: string) {
+  return /^[-•*]/.test(line) || /^[\u00B7\u2022\u2023\u2043\u2219\u25AA\u25CF\u25E6\uF0B7]/.test(line);
+}
+
 function isBlockStart(line: string) {
-  if (/^[-•*]/.test(line) || /^\d{1,2}\s*[\).]\s+\S/.test(line)) return true;
+  if (isBullet(line) || /^\d{1,2}\s*[\).]\s+\S/.test(line)) return true;
   if (knownLabel(line)) return true;
   return isHeading(line);
 }
@@ -119,7 +122,7 @@ function unwrapLines(text: string) {
       continue;
     }
     const previous = merged.at(-1);
-    const join = previous && previous !== "" && !isBlockStart(previous) && !isBlockStart(line) && !/^[-•*]/.test(line);
+    const join = previous && previous !== "" && !isBlockStart(previous) && !isBlockStart(line);
     if (join) merged[merged.length - 1] = `${previous} ${line}`;
     else merged.push(line);
   }
@@ -155,7 +158,7 @@ function isSectionHeading(text: string) {
 }
 
 function isShortListLine(text: string) {
-  return text.split("\n").every((line) => line.length > 0 && line.length <= 80 && !/[.!?]$/.test(line) && !/^[-•*]/.test(line));
+  return text.split("\n").every((line) => line.length > 0 && line.length <= 80 && !/[.!?]$/.test(line) && !isBullet(line));
 }
 
 function titleRunLength(blocks: DescriptionBlock[], start: number) {
