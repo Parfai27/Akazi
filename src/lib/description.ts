@@ -158,47 +158,66 @@ function isShortListLine(text: string) {
   return text.split("\n").every((line) => line.length > 0 && line.length <= 80 && !/[.!?]$/.test(line) && !/^[-•*]/.test(line));
 }
 
-/** A run of role titles under a heading is a list, not a stack of bold titles. */
+function titleRunLength(blocks: DescriptionBlock[], start: number) {
+  let count = 0;
+  for (let index = start; index < blocks.length; index += 1) {
+    const item = blocks[index];
+    if (item.kind !== "heading" || isSectionHeading(item.text)) break;
+    count += 1;
+  }
+  return count;
+}
+
+function takeTitleRun(blocks: DescriptionBlock[], start: number) {
+  const lines: string[] = [];
+  let index = start;
+  while (index < blocks.length) {
+    const item = blocks[index];
+    if (item.kind !== "heading" || isSectionHeading(item.text)) break;
+    lines.push(item.text);
+    index += 1;
+  }
+  return { lines, index };
+}
+
+/**
+ * A long run of role titles is one normal list.
+ * A heading that introduces its own line, such as Job Location, stays a heading.
+ */
 function softenTitleLists(blocks: DescriptionBlock[]): DescriptionBlock[] {
   const result: DescriptionBlock[] = [];
   let index = 0;
   while (index < blocks.length) {
     const block = blocks[index];
-    const next = blocks[index + 1];
-    const previous = result.at(-1);
-    const startsList =
-      block.kind === "heading" &&
-      !isSectionHeading(block.text) &&
-      ((next?.kind === "heading" && !isSectionHeading(next.text)) ||
-        (next?.kind === "paragraph" && isShortListLine(next.text)) ||
-        (previous?.kind === "paragraph" && isShortListLine(previous.text)));
-    if (!startsList) {
+    if (block.kind !== "heading" || isSectionHeading(block.text) || titleRunLength(blocks, index) < 4) {
       result.push(block);
       index += 1;
       continue;
     }
-    const lines = [block.text];
-    index += 1;
-    while (index < blocks.length) {
-      const item = blocks[index];
-      if (item.kind === "heading" && !isSectionHeading(item.text)) {
-        lines.push(item.text);
-        index += 1;
+    const taken = takeTitleRun(blocks, index);
+    let text = taken.lines.join("\n");
+    const last = result.at(-1);
+    if (last?.kind === "paragraph" && isShortListLine(last.text) && !last.text.includes("\n")) {
+      result.pop();
+      text = `${last.text}\n${text}`;
+    }
+    while (result.length) {
+      const previous = result.at(-1);
+      if (!previous) break;
+      if (previous.kind === "heading" && !isSectionHeading(previous.text)) {
+        result.pop();
+        text = `${previous.text}\n${text}`;
         continue;
       }
-      if (item.kind === "paragraph" && isShortListLine(item.text)) {
-        lines.push(...item.text.split("\n"));
-        index += 1;
+      if (previous.kind === "paragraph" && isShortListLine(previous.text) && !previous.text.includes("\n")) {
+        result.pop();
+        text = `${previous.text}\n${text}`;
         continue;
       }
       break;
     }
-    const last = result.at(-1);
-    if (last?.kind === "paragraph" && isShortListLine(last.text)) {
-      last.text = `${last.text}\n${lines.join("\n")}`;
-    } else {
-      result.push({ kind: "paragraph", text: lines.join("\n") });
-    }
+    result.push({ kind: "paragraph", text });
+    index = taken.index;
   }
   return result;
 }
