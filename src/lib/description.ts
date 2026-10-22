@@ -56,9 +56,18 @@ function wordsOf(line: string) {
   return line.split(/\s+/).filter((word) => /[A-Za-z0-9]/.test(word));
 }
 
+function unmatchedClose(line: string) {
+  let depth = 0;
+  for (const character of line) {
+    if (character === "(") depth += 1;
+    else if (character === ")") depth -= 1;
+  }
+  return depth < 0;
+}
+
 function isHeading(line: string) {
   if (line.length < 3 || line.length > 80) return false;
-  if (/[.!?]$/.test(line)) return false;
+  if (/[.!?]$/.test(line) || unmatchedClose(line)) return false;
   if (/^https?:/i.test(line) || /@/.test(line) || isBullet(line)) return false;
   const letters = line.replace(/[^A-Za-z]/g, "");
   if (letters.length < 3) return false;
@@ -113,6 +122,11 @@ function isBlockStart(line: string) {
   return isHeading(line);
 }
 
+function continuesPrevious(previous: string, line: string) {
+  if (isBullet(line) || knownLabel(line) || isHeading(line)) return false;
+  return unmatchedClose(line);
+}
+
 function unwrapLines(text: string) {
   const merged: string[] = [];
   for (const raw of text.replace(/\r\n/g, "\n").split("\n")) {
@@ -122,11 +136,21 @@ function unwrapLines(text: string) {
       continue;
     }
     const previous = merged.at(-1);
-    const join = previous && previous !== "" && !isBlockStart(previous) && !isBlockStart(line);
+    const join =
+      previous &&
+      previous !== "" &&
+      ((!isBlockStart(previous) && !isBlockStart(line)) || continuesPrevious(previous, line));
     if (join) merged[merged.length - 1] = `${previous} ${line}`;
     else merged.push(line);
   }
   return merged;
+}
+
+/** Wingdings and other drawn marks become a normal dot. */
+function normalizeBullets(text: string) {
+  return text
+    .replace(/[\u00B7\u2023\u2043\u2219\u25AA\u25A0\u25CF\u25E6\uF076\uF0A7\uF0B7\uF0D8\uF0FC]/g, "•")
+    .replace(/(^|\n)•(?=\S)/g, "$1• ");
 }
 
 function readableHeading(line: string) {
@@ -235,7 +259,7 @@ function looksLikeDutyList(text: string) {
  * Sources only need to store the posting text.
  */
 export function descriptionBlocks(text: string): DescriptionBlock[] {
-  const lines = unwrapLines(text.replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
+  const lines = unwrapLines(normalizeBullets(text).replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
   const blocks: DescriptionBlock[] = [];
 
   const pushParagraph = (value: string) => {

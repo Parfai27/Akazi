@@ -16,7 +16,7 @@ export function JobDescription({ text }: { text: string }) {
           const grouped = index > 0 && blocks[index - 1]?.kind === "field";
           return (
             <p key={index} className={`text-base leading-8 ${grouped ? "mb-1" : "mt-4 mb-1"}`}>
-              <span className="font-extrabold text-forest">{block.label}</span>
+              <span className="font-extrabold text-forest">{block.label} :</span>
               {block.value ? <span className="text-muted"> {block.value}</span> : null}
             </p>
           );
