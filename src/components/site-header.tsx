@@ -125,6 +125,11 @@ function HeaderSearch({
 }) {
   const [editable, setEditable] = useState(false);
 
+  function allowTyping(input: HTMLInputElement) {
+    input.readOnly = false;
+    setEditable(true);
+  }
+
   return (
     <form action="/" method="get" autoComplete="off" onSubmit={onSubmit} className={className}>
       <label className="min-w-0 flex-1">
@@ -137,7 +142,14 @@ function HeaderSearch({
           spellCheck={false}
           aria-autocomplete="none"
           readOnly={!editable}
+          enterKeyHint="search"
+          inputMode="search"
           onChange={(event) => onChange(event.target.value)}
+          onPointerDown={(event) => {
+            if (event.pointerType === "mouse") return;
+            allowTyping(event.currentTarget);
+          }}
+          onTouchStart={(event) => allowTyping(event.currentTarget)}
           onFocus={(event) => {
             event.currentTarget.readOnly = false;
             setEditable(true);
