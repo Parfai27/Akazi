@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -14,21 +15,53 @@ export type AlertResult = {
   queued: number;
 };
 
+function hookReady() {
+  return Boolean(process.env.MAIL_HOOK_URL && process.env.MAIL_HOOK_SECRET);
+}
+
 export function mailConfigured() {
-  return Boolean(process.env.SMTP_HOST && process.env.MAIL_FROM);
+  return hookReady() || Boolean(process.env.SMTP_HOST && process.env.MAIL_FROM);
 }
 
 function siteUrl() {
   return (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
-async function deliver(to: string, subject: string, text: string, html: string) {
+function logoBase64() {
+  return readFileSync(path.join(process.cwd(), "public", "akazi-logo.png")).toString("base64");
+}
+
+async function deliverViaHook(to: string, subject: string, text: string, html: string) {
+  const response = await fetch(process.env.MAIL_HOOK_URL!, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      secret: process.env.MAIL_HOOK_SECRET,
+      to,
+      subject,
+      text,
+      html,
+      logo: logoBase64(),
+    }),
+    redirect: "follow",
+    signal: AbortSignal.timeout(20_000),
+  });
+  const reply = await response.text();
+  if (!response.ok || !reply.includes("ok")) {
+    throw new Error(reply.replace(/\s+/g, " ").slice(0, 180) || "The alert email could not be sent.");
+  }
+}
+
+async function deliverViaSmtp(to: string, subject: string, text: string, html: string) {
   const port = Number(process.env.SMTP_PORT || 587);
   const transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port,
     secure: process.env.SMTP_SECURE === "true" || port === 465,
     requireTLS: port === 587,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS?.replaceAll(" ", "") }
       : undefined,
@@ -48,6 +81,11 @@ async function deliver(to: string, subject: string, text: string, html: string) 
       },
     ],
   });
+}
+
+async function deliver(to: string, subject: string, text: string, html: string) {
+  if (hookReady()) return deliverViaHook(to, subject, text, html);
+  await deliverViaSmtp(to, subject, text, html);
 }
 
 function remember(subscriberId: number, jobId: number, status: string, detail: string | null, now: string) {

@@ -15,8 +15,12 @@ export function sessionToken(password: string) {
   return createHmac("sha256", password).update("akazi-admin-v1").digest("hex");
 }
 
+export function adminPassword() {
+  return (process.env.ADMIN_PASSWORD ?? "").trim();
+}
+
 export async function isAdmin() {
-  const password = process.env.ADMIN_PASSWORD;
+  const password = adminPassword();
   if (!password) return false;
   const token = (await cookies()).get(ADMIN_COOKIE)?.value;
   if (!token) return false;

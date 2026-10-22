@@ -48,7 +48,7 @@ function pairNote(totals: VisitTotals, when: string) {
 }
 
 async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
-  const configured = Boolean(process.env.ADMIN_PASSWORD);
+  const configured = Boolean(process.env.ADMIN_PASSWORD?.trim());
   if (!configured) {
     return <p className="px-4 py-16 text-muted">Set ADMIN_PASSWORD in .env.local, then restart the site.</p>;
   }

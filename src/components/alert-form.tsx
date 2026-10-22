@@ -21,7 +21,7 @@ export function AlertForm() {
     } else if (matched > 0 && !state.mailReady) {
       detail = `We found ${matched} current match${matched === 1 ? "" : "es"}. Email is not set up on this server yet, so the note is saved and will send once mail is configured.`;
     } else if (matched > 0 && (state.sent ?? 0) === 0) {
-      detail = `We found ${matched} match${matched === 1 ? "" : "es"}, but the email could not be sent. Check the mail settings and submit again.`;
+      detail = `We found ${matched} match${matched === 1 ? "" : "es"}. The email did not go out this time, so try again in a moment.`;
     }
     return (
       <p className="rounded-2xl border border-forest/30 bg-card px-5 py-6 text-base leading-7">

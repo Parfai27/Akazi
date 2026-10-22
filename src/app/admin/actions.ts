@@ -5,11 +5,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { jobs, notifications, subscribers } from "@/db/schema";
-import { ADMIN_COOKIE, isAdmin, passwordsMatch, sessionToken } from "@/lib/admin-auth";
+import { ADMIN_COOKIE, adminPassword, isAdmin, passwordsMatch, sessionToken } from "@/lib/admin-auth";
 
 export async function login(formData: FormData) {
-  const expected = process.env.ADMIN_PASSWORD;
-  const password = String(formData.get("password") ?? "");
+  const expected = adminPassword();
+  const password = String(formData.get("password") ?? "").trim();
   if (!expected || !passwordsMatch(password, expected)) {
     redirect("/admin?error=1");
   }

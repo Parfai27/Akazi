@@ -31,3 +31,7 @@ services:
         value: "Akazi <mugwanezaparfait@gmail.com>"
       - key: SMTP_PASS
         sync: false
+      - key: MAIL_HOOK_URL
+        sync: false
+      - key: MAIL_HOOK_SECRET
+        sync: false
