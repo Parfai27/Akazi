@@ -72,6 +72,20 @@ function openDatabase() {
     CREATE UNIQUE INDEX IF NOT EXISTS notifications_subscriber_job
       ON notifications (subscriber_id, job_id);
 
+    CREATE TABLE IF NOT EXISTS visits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      day TEXT NOT NULL,
+      visitor TEXT NOT NULL,
+      path TEXT NOT NULL,
+      job_function TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS visits_day_visitor_path
+      ON visits (day, visitor, path);
+
+    CREATE INDEX IF NOT EXISTS visits_day_idx ON visits (day);
+
     CREATE TABLE IF NOT EXISTS crawl_runs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       started_at TEXT NOT NULL,
@@ -99,6 +113,10 @@ function getSqlite() {
 
 export function checkpointDatabase() {
   getSqlite().pragma("wal_checkpoint(TRUNCATE)");
+}
+
+export function sqlite() {
+  return getSqlite();
 }
 
 export const db = drizzle(getSqlite(), { schema });

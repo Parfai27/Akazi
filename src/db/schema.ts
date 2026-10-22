@@ -34,6 +34,19 @@ export const jobs = sqliteTable(
   ],
 );
 
+export const visits = sqliteTable(
+  "visits",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    day: text("day").notNull(),
+    visitor: text("visitor").notNull(),
+    path: text("path").notNull(),
+    jobFunction: text("job_function"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("visits_day_visitor_path").on(table.day, table.visitor, table.path)],
+);
+
 export const crawlRuns = sqliteTable("crawl_runs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   startedAt: text("started_at").notNull(),

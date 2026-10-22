@@ -1,9 +1,12 @@
+import path from "node:path";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import { db } from "../db";
 import { jobs, notifications, subscribers, type JobRecord, type SubscriberRecord } from "../db/schema";
 import { matchesProfile } from "./match";
 import { deadlineLabel } from "./url";
+
+const LOGO_CID = "akazi-logo";
 
 export type AlertResult = {
   matched: number;
@@ -19,14 +22,15 @@ function siteUrl() {
   return (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
-async function deliver(to: string, subject: string, text: string) {
+async function deliver(to: string, subject: string, text: string, html: string) {
   const port = Number(process.env.SMTP_PORT || 587);
   const transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port,
     secure: process.env.SMTP_SECURE === "true" || port === 465,
+    requireTLS: port === 587,
     auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS?.replaceAll(" ", "") }
       : undefined,
   });
   await transport.sendMail({
@@ -34,6 +38,15 @@ async function deliver(to: string, subject: string, text: string) {
     to,
     subject,
     text,
+    html,
+    attachments: [
+      {
+        filename: "akazi-logo.png",
+        path: path.join(process.cwd(), "public", "akazi-logo.png"),
+        cid: LOGO_CID,
+        contentDisposition: "inline",
+      },
+    ],
   });
 }
 
@@ -47,25 +60,110 @@ function remember(subscriberId: number, jobId: number, status: string, detail: s
     .run();
 }
 
-function emailBody(person: SubscriberRecord, openings: JobRecord[]) {
-  const lines = openings.map((job) => {
-    return [
-      `${job.title} — ${job.company}`,
-      deadlineLabel(job.deadlineAt),
-      `${job.location || "Location not listed"} · ${siteUrl()}/jobs/${job.id}`,
-    ].join("\n");
-  });
-  return [
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function alertIntro(count: number) {
+  return count === 1
+    ? "This opening on Akazi matches what you studied or your CV."
+    : `These ${count} openings on Akazi match what you studied or your CV.`;
+}
+
+function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecord[]) {
+  const home = siteUrl();
+  const intro = alertIntro(openings.length);
+  const text = [
     `Hello ${person.name},`,
     "",
-    openings.length === 1
-      ? "This opening on Akazi matches what you studied or your CV:"
-      : `These ${openings.length} openings on Akazi match what you studied or your CV:`,
+    intro,
     "",
-    lines.join("\n\n"),
+    openings
+      .map((job) => {
+        const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
+          .filter(Boolean)
+          .join(" · ");
+        return [`${job.title} — ${job.company}`, where, deadlineLabel(job.deadlineAt), `${home}/jobs/${job.id}`].join("\n");
+      })
+      .join("\n\n"),
     "",
     "Apply on the employer’s site from the role page. Akazi only sends these notes because you agreed to email alerts.",
+    home,
   ].join("\n");
+
+  const cards = openings
+    .map((job) => {
+      const href = `${home}/jobs/${job.id}`;
+      const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
+        .filter(Boolean)
+        .join(" · ");
+      return `
+        <tr>
+          <td style="padding:0 0 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e3ebe7;border-radius:14px;">
+              <tr>
+                <td style="padding:18px 18px 8px;font-family:'Segoe UI',Arial,sans-serif;">
+                  <a href="${href}" style="color:#171a21;font-size:18px;font-weight:800;line-height:24px;text-decoration:none;">${escapeHtml(job.title)}</a>
+                  <div style="margin-top:4px;color:#1e6b58;font-size:14px;font-weight:700;">${escapeHtml(job.company)}</div>
+                  <div style="margin-top:8px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(where)}</div>
+                  <div style="margin-top:2px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(deadlineLabel(job.deadlineAt))}</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:8px 18px 18px;">
+                  <a href="${href}" style="display:inline-block;background:#1e6b58;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:700;line-height:20px;text-decoration:none;padding:10px 16px;border-radius:10px;">View role</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#f2f7f5;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(intro)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f7f5;">
+      <tr>
+        <td align="center" style="padding:24px 12px;">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;">
+            <tr>
+              <td style="background:#1e6b58;padding:22px 24px;">
+                <img src="cid:${LOGO_CID}" width="44" height="44" alt="" style="display:inline-block;border:0;border-radius:10px;vertical-align:middle;" />
+                <span style="display:inline-block;margin-left:12px;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.04em;vertical-align:middle;">Akazi</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 24px 8px;font-family:'Segoe UI',Arial,sans-serif;color:#171a21;">
+                <div style="font-size:16px;line-height:24px;">Hello ${escapeHtml(person.name)},</div>
+                <div style="margin-top:8px;font-size:16px;line-height:24px;">${escapeHtml(intro)}</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${cards}</table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:4px 24px 24px;font-family:'Segoe UI',Arial,sans-serif;color:#6b7280;font-size:13px;line-height:20px;">
+                Apply on the employer’s site from the role page. Akazi only sends these notes because you agreed to email alerts.
+                <br />
+                <a href="${home}" style="color:#1e6b58;text-decoration:none;">${escapeHtml(home.replace(/^https?:\/\//, ""))}</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return { text, html };
 }
 
 async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): Promise<AlertResult> {
@@ -77,10 +175,12 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
 
   if (ready) {
     try {
+      const message = alertMessage(person, openings);
       await deliver(
         person.email,
         openings.length === 1 ? `A role on Akazi matches you: ${openings[0].title}` : `${openings.length} Akazi roles match you`,
-        emailBody(person, openings),
+        message.text,
+        message.html,
       );
       sent = openings.length;
     } catch (error) {
@@ -165,10 +265,12 @@ export async function flushQueuedAlerts() {
     if (!person) continue;
     const openings = db.select().from(jobs).where(inArray(jobs.id, jobIds)).all();
     try {
+      const message = alertMessage(person, openings);
       await deliver(
         person.email,
         openings.length === 1 ? `A role on Akazi matches you: ${openings[0]?.title ?? "New role"}` : `${openings.length} Akazi roles match you`,
-        emailBody(person, openings),
+        message.text,
+        message.html,
       );
       db.update(notifications)
         .set({ status: "sent", detail: null })

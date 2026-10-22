@@ -11,9 +11,23 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: SITE_URL
+        value: https://akazi-u968.onrender.com
       - key: ADMIN_PASSWORD
         generateValue: true
       - key: ADSENSE_CLIENT
         value: ca-pub-5649671721567993
       - key: ADSENSE_SLOT
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        value: mugwanezaparfait@gmail.com
+      - key: MAIL_FROM
+        value: "Akazi <mugwanezaparfait@gmail.com>"
+      - key: SMTP_PASS
         sync: false

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { jobs } from "@/db/schema";
+import { jobs, notifications, subscribers } from "@/db/schema";
 import { ADMIN_COOKIE, isAdmin, passwordsMatch, sessionToken } from "@/lib/admin-auth";
 
 export async function login(formData: FormData) {
@@ -35,4 +35,13 @@ export async function markReviewed() {
   if (!(await isAdmin())) redirect("/admin");
   db.update(jobs).set({ isNew: false }).where(eq(jobs.isNew, true)).run();
   redirect("/admin");
+}
+
+export async function removeSubscriber(formData: FormData) {
+  if (!(await isAdmin())) redirect("/admin");
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id) || id <= 0) redirect("/admin/alerts");
+  db.delete(notifications).where(eq(notifications.subscriberId, id)).run();
+  db.delete(subscribers).where(eq(subscribers.id, id)).run();
+  redirect("/admin/alerts");
 }
