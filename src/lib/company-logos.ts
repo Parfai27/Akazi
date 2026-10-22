@@ -15,6 +15,11 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   Zenysis: { src: "https://cdn.join.com/69ea6b90e665f00008c43a54/zenysis-technologies-logo-m.png" },
   "Directorate General of Immigration and Emigration": { src: "/logos/dgie.jpg", cover: true },
   RwandAir: { src: "/logos/Rwandairlogo.jpg" },
+  "MTN Rwanda": { src: "https://careers.mtn.co.rw/mtn-favicon.png" },
+  "Airtel Rwanda": { src: "https://www.airtel.co.rw/favicon.png" },
+  Irembo: {
+    src: "https://s101-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/168/610/original/blue_icon.png?1680083936",
+  },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },

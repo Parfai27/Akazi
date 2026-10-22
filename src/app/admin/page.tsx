@@ -95,7 +95,8 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Overview</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
           A person is one browser. A visit is a page they open, counted once per page each day. Weeks start on Monday,
-          in Rwanda time. {mailConfigured() ? "Alert email is ready to send." : "Alert email is not set up, so matches stay queued."}{" "}
+          in Rwanda time. These counts start again when the site restarts.{" "}
+          {mailConfigured() ? "Alert email is ready to send." : "Alert email is not set up, so matches stay queued."}{" "}
           <Link href="/admin/mail" className="font-semibold text-forest underline-offset-4 hover:underline">
             See mail
           </Link>
@@ -104,7 +105,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="People" value={stats.all.people} note="Everyone counted so far" />
+        <Stat label="People" value={stats.all.people} note="Since the last restart" />
         <Stat label="People this week" value={stats.week.people} note={pairNote(stats.week, "this week")} />
         <Stat label="Visits this month" value={stats.month.visits} note={pairNote(stats.month, "this month")} />
         <Stat label="Alert signups" value={stats.signupsThisMonth} note={`${stats.signupsTotal} in total · this month shown`} />

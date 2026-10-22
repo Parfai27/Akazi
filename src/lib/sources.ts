@@ -1,4 +1,14 @@
-export type SourceType = "greenhouse" | "lever" | "jsonld" | "html" | "mifotra" | "migration" | "rwandair";
+export type SourceType =
+  | "greenhouse"
+  | "lever"
+  | "jsonld"
+  | "html"
+  | "mifotra"
+  | "migration"
+  | "rwandair"
+  | "mtn"
+  | "airtel"
+  | "rssb";
 
 export type JobSource = {
   id: string;
@@ -31,6 +41,9 @@ export type JobSource = {
  * - migration: the Directorate General of Immigration and Emigration career page.
  *   Roles that share a deadline are stored as one opening.
  * - rwandair: the RwandAir recruitment portal. Each Rwanda vacancy is one opening.
+ * - mtn: the MTN Rwanda careers API. Closed deadlines are left off.
+ * - airtel: Airtel Africa's public board, kept only when the role is in Rwanda.
+ * - rssb: the RSSB careers table. A row is kept when its status is Open.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -122,5 +135,30 @@ export const jobSources: JobSource[] = [
     name: "RwandAir",
     careerUrl: "https://erecruitment.rwandair.com/",
     type: "rwandair",
+  },
+  {
+    id: "mtn-rwanda",
+    name: "MTN Rwanda",
+    careerUrl: "https://careers.mtn.co.rw/",
+    type: "mtn",
+  },
+  {
+    id: "airtel-rwanda",
+    name: "Airtel Rwanda",
+    careerUrl: "https://www.airtel.co.rw/career",
+    type: "airtel",
+  },
+  {
+    id: "rssb",
+    name: "RSSB",
+    careerUrl: "https://rssb.rw/career",
+    type: "rssb",
+  },
+  {
+    id: "irembo",
+    name: "Irembo",
+    careerUrl: "https://irembo.com/careers/",
+    type: "greenhouse",
+    boardToken: "iremboltd",
   },
 ];

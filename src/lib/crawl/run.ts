@@ -9,8 +9,11 @@ import { readGreenhouse } from "./greenhouse";
 import { readHtml } from "./html";
 import { readJsonLd } from "./jsonld";
 import { readLever } from "./lever";
+import { readAirtel } from "./airtel";
 import { readMigration } from "./migration";
 import { readMifotra } from "./mifotra";
+import { readMtn } from "./mtn";
+import { readRssb } from "./rssb";
 import { readRwandAir } from "./rwandair";
 import type { RawJob } from "./types";
 
@@ -34,6 +37,9 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
   if (source.type === "mifotra") return readMifotra();
   if (source.type === "migration") return readMigration();
   if (source.type === "rwandair") return readRwandAir();
+  if (source.type === "mtn") return readMtn();
+  if (source.type === "airtel") return readAirtel();
+  if (source.type === "rssb") return readRssb();
   return readHtml(source.careerUrl);
 }
 
