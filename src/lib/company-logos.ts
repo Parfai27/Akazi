@@ -31,6 +31,7 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   IDinsight: { src: "https://www.idinsight.org/favicon.ico", cover: true },
   LemFi: { src: "https://www.lemfi.com/favicon.ico", cover: true },
   Zapier: { src: "https://zapier.com/favicon.ico", cover: true },
+  micro1: { src: "https://www.micro1.ai/favicon.ico", cover: true },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },

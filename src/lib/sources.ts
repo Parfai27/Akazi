@@ -11,7 +11,8 @@ export type SourceType =
   | "rssb"
   | "workable"
   | "breezy"
-  | "ashby";
+  | "ashby"
+  | "micro1";
 
 export type JobSource = {
   id: string;
@@ -51,6 +52,8 @@ export type JobSource = {
  * - breezy: boardToken is the site in {site}.breezy.hr. Rwanda roles only. Talent pools are skipped.
  * - ashby: boardToken is the name in jobs.ashbyhq.com/{board}. scope "wide" keeps
  *   remote roles that are open anywhere, in EMEA, or in Africa.
+ * - micro1: the public expert board at micro1.ai. scope "wide" keeps a role when
+ *   its location line is remote and not locked to one country.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -254,6 +257,13 @@ export const jobSources: JobSource[] = [
     careerUrl: "https://zapier.com/jobs",
     type: "ashby",
     boardToken: "zapier",
+    scope: "wide",
+  },
+  {
+    id: "micro1",
+    name: "micro1",
+    careerUrl: "https://www.micro1.ai/experts/opportunities",
+    type: "micro1",
     scope: "wide",
   },
 ];

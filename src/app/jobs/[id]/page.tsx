@@ -75,17 +75,17 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">{job.title}</h1>
               <p className="mt-1 text-sm font-semibold text-forest">{job.company}</p>
-              <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-forest" aria-label={`${viewers} people viewed this role`}>
-                <EyeIcon />
-                <span className="text-ink">{viewers}</span>
-              </p>
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium">
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
             <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{mode}</span>
             {showPlace ? <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{place}</span> : null}
             <span className="rounded-md bg-amber px-2.5 py-1 text-clay">{functionLabel(jobFunction(job.title))}</span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-chip px-2.5 py-1 font-semibold text-forest" aria-label={`${viewers} people viewed this role`}>
+              <EyeIcon />
+              <span className="text-ink">{viewers}</span>
+            </span>
           </div>
 
           {!job.isActive ? (

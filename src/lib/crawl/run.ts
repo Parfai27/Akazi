@@ -14,6 +14,7 @@ import { readLever } from "./lever";
 import { readAirtel } from "./airtel";
 import { readBreezy } from "./breezy";
 import { readMigration } from "./migration";
+import { readMicro1 } from "./micro1";
 import { readMifotra } from "./mifotra";
 import { readMtn } from "./mtn";
 import { readRssb } from "./rssb";
@@ -56,6 +57,7 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
     if (!source.boardToken) throw new Error("Missing Ashby board");
     return readAshby(source.boardToken);
   }
+  if (source.type === "micro1") return readMicro1();
   return readHtml(source.careerUrl);
 }
 
