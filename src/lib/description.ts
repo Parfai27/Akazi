@@ -1,6 +1,8 @@
 const ACRONYMS = new Set(["ALU", "HR", "IT", "CV", "NGO", "UN", "CEO", "GTM", "USA", "UK", "AI", "QA", "EMEA"]);
 
-export type DescriptionBlock = { kind: "heading" | "subheading" | "paragraph"; text: string };
+export type DescriptionBlock =
+  | { kind: "heading" | "paragraph"; text: string }
+  | { kind: "field"; label: string; value: string };
 
 const SMALL_WORDS = new Set(["a", "an", "and", "for", "in", "of", "on", "the", "to"]);
 
@@ -23,9 +25,10 @@ const SECTION_LABELS = [
   "qualifications",
   "requirements",
   "about you",
+  "openings",
 ];
 
-/** Short labels that introduce one fact, shown as colored keywords. */
+/** A label and its value belong on one line, wherever a posting uses them. */
 const FIELD_LABELS = [
   "appointment type",
   "reporting to",
@@ -35,8 +38,6 @@ const FIELD_LABELS = [
   "location",
   "experience",
   "positions",
-  "essential",
-  "desired",
 ];
 
 function titleCaseLabel(label: string) {
@@ -83,7 +84,7 @@ function labelPattern(labels: string[]) {
 const SECTION_PATTERN = labelPattern(SECTION_LABELS);
 const FIELD_PATTERN = labelPattern(FIELD_LABELS);
 
-function knownLabel(line: string): { kind: "heading" | "subheading"; label: string; rest: string } | null {
+function knownLabel(line: string): { kind: "heading" | "field"; label: string; rest: string } | null {
   const stripped = line.replace(/^\d{1,2}\s*[\).]\s*/, "").trim();
   const section = stripped.match(new RegExp(`^(${SECTION_PATTERN})\\s*([:;]?)\\s*(.*)$`, "i"));
   if (section && (!section[3].trim() || section[2] === ":" || section[2] === ";")) {
@@ -95,10 +96,10 @@ function knownLabel(line: string): { kind: "heading" | "subheading"; label: stri
   }
   const field = stripped.match(new RegExp(`^(${FIELD_PATTERN})\\s*:\\s*(.*)$`, "i"));
   if (field) {
-    return { kind: "subheading", label: titleCaseLabel(field[1]), rest: field[2].trim() };
+    return { kind: "field", label: titleCaseLabel(field[1]), rest: field[2].trim() };
   }
   if (new RegExp(`^(${FIELD_PATTERN})$`, "i").test(stripped)) {
-    return { kind: "subheading", label: titleCaseLabel(stripped), rest: "" };
+    return { kind: "field", label: titleCaseLabel(stripped), rest: "" };
   }
   return null;
 }
@@ -149,6 +150,59 @@ function readableHeading(line: string) {
     .join("");
 }
 
+function isSectionHeading(text: string) {
+  return new RegExp(`^(${SECTION_PATTERN})$`, "i").test(text.trim());
+}
+
+function isShortListLine(text: string) {
+  return text.split("\n").every((line) => line.length > 0 && line.length <= 80 && !/[.!?]$/.test(line) && !/^[-•*]/.test(line));
+}
+
+/** A run of role titles under a heading is a list, not a stack of bold titles. */
+function softenTitleLists(blocks: DescriptionBlock[]): DescriptionBlock[] {
+  const result: DescriptionBlock[] = [];
+  let index = 0;
+  while (index < blocks.length) {
+    const block = blocks[index];
+    const next = blocks[index + 1];
+    const previous = result.at(-1);
+    const startsList =
+      block.kind === "heading" &&
+      !isSectionHeading(block.text) &&
+      ((next?.kind === "heading" && !isSectionHeading(next.text)) ||
+        (next?.kind === "paragraph" && isShortListLine(next.text)) ||
+        (previous?.kind === "paragraph" && isShortListLine(previous.text)));
+    if (!startsList) {
+      result.push(block);
+      index += 1;
+      continue;
+    }
+    const lines = [block.text];
+    index += 1;
+    while (index < blocks.length) {
+      const item = blocks[index];
+      if (item.kind === "heading" && !isSectionHeading(item.text)) {
+        lines.push(item.text);
+        index += 1;
+        continue;
+      }
+      if (item.kind === "paragraph" && isShortListLine(item.text)) {
+        lines.push(...item.text.split("\n"));
+        index += 1;
+        continue;
+      }
+      break;
+    }
+    const last = result.at(-1);
+    if (last?.kind === "paragraph" && isShortListLine(last.text)) {
+      last.text = `${last.text}\n${lines.join("\n")}`;
+    } else {
+      result.push({ kind: "paragraph", text: lines.join("\n") });
+    }
+  }
+  return result;
+}
+
 function looksLikeDutyList(text: string) {
   if (/(^|\n)\s*(?:[•\-*]|\d+[\).]|[a-z][\).])\s+\S/i.test(text)) return true;
   return /;\s*\d+[\).]\s+\S/.test(text);
@@ -173,15 +227,27 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
     paragraph = [];
   };
 
-  for (const line of lines) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (!line) {
       flush();
       continue;
     }
     const known = knownLabel(line);
+    if (known?.kind === "field") {
+      flush();
+      let value = known.rest;
+      const upcoming = lines[index + 1];
+      if (!value && upcoming && !knownLabel(upcoming) && !isHeading(upcoming)) {
+        value = upcoming;
+        index += 1;
+      }
+      blocks.push({ kind: "field", label: known.label, value });
+      continue;
+    }
     if (known) {
       flush();
-      blocks.push({ kind: known.kind, text: known.label });
+      blocks.push({ kind: "heading", text: known.label });
       if (known.rest) pushParagraph(known.rest);
       continue;
     }
@@ -194,8 +260,9 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
   }
   flush();
 
-  if (blocks[0]?.kind === "paragraph" && blocks.every((block) => block.kind === "paragraph") && looksLikeDutyList(text)) {
-    blocks.unshift({ kind: "heading", text: "Duties and responsibilities" });
+  const shaped = softenTitleLists(blocks);
+  if (shaped[0]?.kind === "paragraph" && shaped.every((block) => block.kind === "paragraph") && looksLikeDutyList(text)) {
+    shaped.unshift({ kind: "heading", text: "Duties and responsibilities" });
   }
-  return blocks;
+  return shaped;
 }

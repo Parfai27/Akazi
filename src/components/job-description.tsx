@@ -12,11 +12,13 @@ export function JobDescription({ text }: { text: string }) {
             </h2>
           );
         }
-        if (block.kind === "subheading") {
+        if (block.kind === "field") {
+          const grouped = index > 0 && blocks[index - 1]?.kind === "field";
           return (
-            <h3 key={index} className="mt-6 mb-2 text-base font-extrabold text-forest first:mt-2">
-              {block.text}
-            </h3>
+            <p key={index} className={`text-base leading-8 ${grouped ? "mb-1" : "mt-4 mb-1"}`}>
+              <span className="font-extrabold text-forest">{block.label}</span>
+              {block.value ? <span className="text-muted"> {block.value}</span> : null}
+            </p>
           );
         }
         return (
