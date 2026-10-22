@@ -82,7 +82,9 @@ export async function getBoard(filters: JobFilters) {
 export async function getJob(id: number): Promise<JobRecord | null> {
   await io();
   if (!Number.isInteger(id) || id <= 0) return null;
-  return db.select().from(jobs).where(eq(jobs.id, id)).get() ?? null;
+  const job = db.select().from(jobs).where(eq(jobs.id, id)).get();
+  if (!job?.isActive) return null;
+  return job;
 }
 
 export async function getAdminSnapshot() {

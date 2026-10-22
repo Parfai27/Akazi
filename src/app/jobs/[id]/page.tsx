@@ -5,9 +5,11 @@ import { AdSlot } from "@/components/ad-slot";
 import { CompanyMark } from "@/components/company-mark";
 import { JobDescription } from "@/components/job-description";
 import { JobShare } from "@/components/job-share";
-import { ArrowLeftIcon, ExternalIcon } from "@/components/icons";
+import { ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
 import { adConfig } from "@/lib/ads";
+import { sqlite } from "@/db";
 import { getJob } from "@/lib/jobs";
+import { jobViewerCount } from "@/lib/record-log";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
 import { placeLabel, workModeLabel } from "@/lib/tag";
 import { deadlineLabel, formatPosted, safeHttpUrl } from "@/lib/url";
@@ -46,6 +48,11 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
   const showPlace = place.toLowerCase() !== mode.toLowerCase();
   const showLocation = Boolean(job.location && !/^(remote|hybrid|on-?site)$/i.test(job.location.trim()));
   const ads = adConfig();
+  const keptViewers = await jobViewerCount(job.sourceId, job.externalId);
+  const localViewers = sqlite()
+    .prepare("SELECT COUNT(DISTINCT visitor) AS total FROM visits WHERE path = ?")
+    .get(`/jobs/${job.id}`) as { total: number } | undefined;
+  const viewers = keptViewers ?? Number(localViewers?.total ?? 0);
 
   return (
     <article>
@@ -68,6 +75,10 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">{job.title}</h1>
               <p className="mt-1 text-sm font-semibold text-forest">{job.company}</p>
+              <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-forest" aria-label={`${viewers} people viewed this role`}>
+                <EyeIcon />
+                <span className="text-ink">{viewers}</span>
+              </p>
             </div>
           </div>
 

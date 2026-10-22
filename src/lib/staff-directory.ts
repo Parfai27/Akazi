@@ -1,7 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { functionLabel, jobFunction } from "@/lib/organize";
-import { loadKeptMail, restoreStudyRecords, type KeptMail } from "@/lib/record-log";
+import { jobViewerCount, loadKeptMail, restoreStudyRecords, type KeptMail } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits } from "@/lib/visit-log";
 
 export type OpeningRow = {
@@ -57,6 +57,8 @@ type JobSql = {
   id: number;
   title: string;
   company: string;
+  sourceId: string;
+  externalId: string;
   deadlineAt: string | null;
   isActive: number;
   isNew: number;
@@ -67,7 +69,8 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
   await restoreStudyRecords();
   const jobs = sqlite()
     .prepare(
-      `SELECT id, title, company, deadline_at AS deadlineAt, is_active AS isActive, is_new AS isNew
+      `SELECT id, title, company, source_id AS sourceId, external_id AS externalId,
+              deadline_at AS deadlineAt, is_active AS isActive, is_new AS isNew
        FROM jobs`,
     )
     .all() as JobSql[];
@@ -82,8 +85,10 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
     if (!Number.isInteger(id)) continue;
     byId.set(id, (byId.get(id) ?? 0) + 1);
   }
-  return jobs
-    .map((job) => ({
+  const rows = [];
+  for (const job of jobs) {
+    const kept = await jobViewerCount(job.sourceId, job.externalId);
+    rows.push({
       id: job.id,
       title: job.title,
       company: job.company,
@@ -91,8 +96,10 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
       active: Boolean(job.isActive),
       isNew: Boolean(job.isNew),
       deadline: job.deadlineAt,
-      views: byId.get(job.id) ?? 0,
-    }))
+      views: kept ?? byId.get(job.id) ?? 0,
+    });
+  }
+  return rows
     .sort((a, b) => b.views - a.views || Number(b.active) - Number(a.active) || a.title.localeCompare(b.title));
 }
 

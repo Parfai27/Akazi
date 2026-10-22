@@ -266,6 +266,76 @@ export async function restoreStudyRecords(): Promise<Set<string>> {
   }
 }
 
+let viewerTask: Promise<Map<string, string[]>> | null = null;
+let viewerAt = 0;
+
+function invalidateViewers() {
+  viewerTask = null;
+  viewerAt = 0;
+}
+
+async function loadViewers(): Promise<Map<string, string[]>> {
+  if (!hookReady()) return new Map();
+  const now = Date.now();
+  if (viewerTask && now - viewerAt < 20_000) return viewerTask;
+  viewerAt = now;
+  viewerTask = listBucket("views")
+    .then((rows) => {
+      const map = new Map<string, string[]>();
+      for (const row of rows) {
+        try {
+          const parsed = JSON.parse(row.payload) as unknown;
+          if (!Array.isArray(parsed)) continue;
+          const people = parsed.filter((item): item is string => typeof item === "string" && /^[a-f0-9]{32}$/.test(item));
+          map.set(row.key, people);
+        } catch {
+          // Skip a damaged row.
+        }
+      }
+      return map;
+    })
+    .catch((error: unknown) => {
+      viewerTask = null;
+      viewerAt = 0;
+      throw error;
+    });
+  return viewerTask;
+}
+
+export function viewKey(sourceId: string, externalId: string) {
+  return `${sourceId}\t${externalId}`;
+}
+
+/** Remember one person on a role so the eye count survives a rebuild. */
+export async function rememberJobViewer(sourceId: string, externalId: string, visitor: string) {
+  if (!hookReady() || !/^[a-f0-9]{32}$/.test(visitor)) return;
+  if (!sourceId || !externalId || sourceId.includes("\t") || externalId.includes("\t")) return;
+  try {
+    const key = viewKey(sourceId, externalId);
+    const map = await loadViewers();
+    const people = new Set(map.get(key) ?? []);
+    if (people.has(visitor) || people.size >= 5000) return;
+    people.add(visitor);
+    const next = [...people];
+    map.set(key, next);
+    await saveRecord("views", key, JSON.stringify(next));
+  } catch {
+    // The local visit still counts until the next view is saved.
+  }
+  invalidateViewers();
+}
+
+/** People who opened this role. Null when the kept log is not configured. */
+export async function jobViewerCount(sourceId: string, externalId: string): Promise<number | null> {
+  if (!hookReady()) return null;
+  try {
+    const map = await loadViewers();
+    return (map.get(viewKey(sourceId, externalId)) ?? []).length;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadKeptMail(): Promise<KeptMail[] | null> {
   if (!hookReady()) return null;
   try {

@@ -1,7 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
-import { restoreStudyRecords } from "@/lib/record-log";
+import { rememberJobViewer, restoreStudyRecords } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits, rememberVisit } from "@/lib/visit-log";
 
 const ZONE = "Africa/Kigali";
@@ -84,11 +84,15 @@ export async function recordVisit(visitor: string, path: string) {
   const day = kigaliDay();
   let role: JobFunction | null = null;
   const match = /^\/jobs\/(\d+)$/.exec(path);
+  let viewed: { sourceId: string; externalId: string } | null = null;
   if (match) {
-    const job = sqlite().prepare("SELECT title FROM jobs WHERE id = ?").get(Number(match[1])) as
-      | { title: string }
-      | undefined;
-    if (job) role = jobFunction(job.title);
+    const job = sqlite()
+      .prepare("SELECT title, source_id AS sourceId, external_id AS externalId FROM jobs WHERE id = ?")
+      .get(Number(match[1])) as { title: string; sourceId: string; externalId: string } | undefined;
+    if (job) {
+      role = jobFunction(job.title);
+      viewed = { sourceId: job.sourceId, externalId: job.externalId };
+    }
   }
   sqlite()
     .prepare(
@@ -98,6 +102,7 @@ export async function recordVisit(visitor: string, path: string) {
     )
     .run(day, visitor, path, role, new Date().toISOString());
   await rememberVisit({ day, visitor, path, jobFunction: role });
+  if (viewed) await rememberJobViewer(viewed.sourceId, viewed.externalId, visitor);
 }
 
 export async function getStaffStats(): Promise<StaffStats> {

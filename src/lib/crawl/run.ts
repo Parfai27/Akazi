@@ -1,6 +1,6 @@
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../../db";
-import { crawlRuns, jobs, sources } from "../../db/schema";
+import { crawlRuns, jobs, notifications, sources } from "../../db/schema";
 import { jobSources, type JobSource } from "../sources";
 import { classifyPosting, mentionsRwanda } from "../tag";
 import { extractDeadline } from "../url";
@@ -157,22 +157,32 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
       if (!alreadyReviewed) createdIds.push(Number(inserted.lastInsertRowid));
     }
 
-    const missing = and(eq(jobs.sourceId, source.id), eq(jobs.isActive, true));
-    if (seenIds.length === 0) {
-      tx.update(jobs).set({ isActive: false }).where(missing).run();
-    } else {
-      tx.update(jobs)
-        .set({ isActive: false })
-        .where(and(missing, notInArray(jobs.externalId, seenIds)))
-        .run();
+    const missing =
+      seenIds.length === 0
+        ? eq(jobs.sourceId, source.id)
+        : and(eq(jobs.sourceId, source.id), notInArray(jobs.externalId, seenIds));
+    const gone = tx.select({ id: jobs.id }).from(jobs).where(missing).all();
+    const goneIds = gone.map((row) => row.id);
+    if (goneIds.length > 0) {
+      tx.delete(notifications).where(inArray(notifications.jobId, goneIds)).run();
+      tx.delete(jobs).where(inArray(jobs.id, goneIds)).run();
     }
   });
 
   return createdIds;
 }
 
+function deleteClosedJobs() {
+  const gone = db.select({ id: jobs.id }).from(jobs).where(eq(jobs.isActive, false)).all();
+  const goneIds = gone.map((row) => row.id);
+  if (goneIds.length === 0) return;
+  db.delete(notifications).where(inArray(notifications.jobId, goneIds)).run();
+  db.delete(jobs).where(eq(jobs.isActive, false)).run();
+}
+
 export async function crawlAll(options?: { notify?: boolean }) {
   syncSources();
+  deleteClosedJobs();
   const reviewed = await restoreStudyRecords();
   const startedAt = new Date().toISOString();
   const inserted = db
