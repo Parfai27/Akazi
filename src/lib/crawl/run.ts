@@ -10,11 +10,13 @@ import { readHtml } from "./html";
 import { readJsonLd } from "./jsonld";
 import { readLever } from "./lever";
 import { readAirtel } from "./airtel";
+import { readBreezy } from "./breezy";
 import { readMigration } from "./migration";
 import { readMifotra } from "./mifotra";
 import { readMtn } from "./mtn";
 import { readRssb } from "./rssb";
 import { readRwandAir } from "./rwandair";
+import { readWorkable } from "./workable";
 import type { RawJob } from "./types";
 
 const DESCRIPTION_LIMIT = 20000;
@@ -40,6 +42,14 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
   if (source.type === "mtn") return readMtn();
   if (source.type === "airtel") return readAirtel();
   if (source.type === "rssb") return readRssb();
+  if (source.type === "workable") {
+    if (!source.boardToken) throw new Error("Missing Workable account");
+    return readWorkable(source.boardToken);
+  }
+  if (source.type === "breezy") {
+    if (!source.boardToken) throw new Error("Missing Breezy site");
+    return readBreezy(source.boardToken);
+  }
   return readHtml(source.careerUrl);
 }
 
@@ -159,7 +169,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
   return createdIds;
 }
 
-export async function crawlAll() {
+export async function crawlAll(options?: { notify?: boolean }) {
   syncSources();
   const startedAt = new Date().toISOString();
   const inserted = db
@@ -202,11 +212,13 @@ export async function crawlAll() {
     }
   }
 
-  try {
-    const alertNote = await notifyNewJobs(newJobIds);
-    if (alertNote) notes.push(alertNote);
-  } catch (error) {
-    notes.push(`Alerts: ${errorMessage(error)}`);
+  if (options?.notify !== false) {
+    try {
+      const alertNote = await notifyNewJobs(newJobIds);
+      if (alertNote) notes.push(alertNote);
+    } catch (error) {
+      notes.push(`Alerts: ${errorMessage(error)}`);
+    }
   }
 
   const status = failures === 0 ? "ok" : failures === jobSources.length ? "error" : "partial";

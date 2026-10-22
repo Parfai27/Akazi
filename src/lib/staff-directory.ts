@@ -1,6 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { functionLabel, jobFunction } from "@/lib/organize";
+import { loadRememberedVisits, mergeVisits } from "@/lib/visit-log";
 
 export type OpeningRow = {
   id: number;
@@ -68,10 +69,17 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
        FROM jobs`,
     )
     .all() as JobSql[];
-  const views = sqlite()
-    .prepare("SELECT path, COUNT(*) AS views FROM visits WHERE path LIKE '/jobs/%' GROUP BY path")
-    .all() as { path: string; views: number }[];
-  const byId = new Map(views.map((row) => [Number(row.path.slice("/jobs/".length)), Number(row.views)]));
+  const local = sqlite()
+    .prepare("SELECT day, visitor, path, job_function AS jobFunction FROM visits")
+    .all() as { day: string; visitor: string; path: string; jobFunction: string | null }[];
+  const visits = mergeVisits(local, await loadRememberedVisits());
+  const byId = new Map<number, number>();
+  for (const visit of visits) {
+    if (!visit.path.startsWith("/jobs/")) continue;
+    const id = Number(visit.path.slice("/jobs/".length));
+    if (!Number.isInteger(id)) continue;
+    byId.set(id, (byId.get(id) ?? 0) + 1);
+  }
   return jobs
     .map((job) => ({
       id: job.id,
@@ -162,16 +170,18 @@ export async function getMailLog(): Promise<{ summary: MailSummary; rows: MailRo
 
 export async function getRecentOpens(): Promise<RecentOpen[]> {
   await io();
-  const rows = sqlite()
-    .prepare(
-      `SELECT path, day, COUNT(*) AS views
-       FROM visits
-       WHERE path LIKE '/jobs/%'
-       GROUP BY path, day
-       ORDER BY day DESC, views DESC
-       LIMIT 8`,
-    )
-    .all() as { path: string; day: string; views: number }[];
+  const local = sqlite()
+    .prepare("SELECT day, visitor, path, job_function AS jobFunction FROM visits")
+    .all() as { day: string; visitor: string; path: string; jobFunction: string | null }[];
+  const grouped = new Map<string, { path: string; day: string; views: number }>();
+  for (const visit of mergeVisits(local, await loadRememberedVisits())) {
+    if (!visit.path.startsWith("/jobs/")) continue;
+    const key = `${visit.path}|${visit.day}`;
+    const current = grouped.get(key);
+    if (current) current.views += 1;
+    else grouped.set(key, { path: visit.path, day: visit.day, views: 1 });
+  }
+  const rows = [...grouped.values()].sort((a, b) => b.day.localeCompare(a.day) || b.views - a.views).slice(0, 8);
   const ids = rows.map((row) => Number(row.path.slice("/jobs/".length))).filter((id) => Number.isInteger(id));
   if (ids.length === 0) return [];
   const jobs = sqlite()

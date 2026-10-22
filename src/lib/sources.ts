@@ -8,7 +8,9 @@ export type SourceType =
   | "rwandair"
   | "mtn"
   | "airtel"
-  | "rssb";
+  | "rssb"
+  | "workable"
+  | "breezy";
 
 export type JobSource = {
   id: string;
@@ -44,6 +46,8 @@ export type JobSource = {
  * - mtn: the MTN Rwanda careers API. Closed deadlines are left off.
  * - airtel: Airtel Africa's public board, kept only when the role is in Rwanda.
  * - rssb: the RSSB careers table. A row is kept when its status is Open.
+ * - workable: boardToken is the account in apply.workable.com/{account}. Rwanda roles only.
+ * - breezy: boardToken is the site in {site}.breezy.hr. Rwanda roles only. Talent pools are skipped.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -160,5 +164,29 @@ export const jobSources: JobSource[] = [
     careerUrl: "https://irembo.com/careers/",
     type: "greenhouse",
     boardToken: "iremboltd",
+  },
+  {
+    id: "rising-academies",
+    name: "Rising Academies",
+    careerUrl: "https://apply.workable.com/rising-academies/",
+    type: "workable",
+    boardToken: "rising-academies",
+    scope: "rwanda",
+  },
+  {
+    id: "access-bank",
+    name: "Access Bank",
+    careerUrl: "https://apply.workable.com/access-bank/",
+    type: "workable",
+    boardToken: "access-bank",
+    scope: "rwanda",
+  },
+  {
+    id: "ampersand",
+    name: "Ampersand",
+    careerUrl: "https://ampersand-energy.breezy.hr/",
+    type: "breezy",
+    boardToken: "ampersand-energy",
+    scope: "rwanda",
   },
 ];

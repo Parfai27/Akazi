@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   } catch {
     path = "";
   }
-  if (path) recordVisit(visitor, path);
+  if (path) await recordVisit(visitor, path);
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(COOKIE, visitor, {

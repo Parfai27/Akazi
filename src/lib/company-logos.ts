@@ -20,6 +20,9 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   Irembo: {
     src: "https://s101-recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/400/168/610/original/blue_icon.png?1680083936",
   },
+  "Rising Academies": { src: "https://www.risingacademies.com/favicon.ico", cover: true },
+  "Access Bank": { src: "https://www.accessbankplc.com/favicon.ico", cover: true },
+  Ampersand: { src: "https://ampersand.energy/favicon.ico", cover: true },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },

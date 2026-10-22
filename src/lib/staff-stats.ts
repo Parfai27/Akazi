@@ -1,6 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
+import { loadRememberedVisits, mergeVisits, rememberVisit } from "@/lib/visit-log";
 
 const ZONE = "Africa/Kigali";
 
@@ -19,7 +20,7 @@ export type StaffStats = {
   signupMonths: { label: string; count: number }[];
 };
 
-type VisitRow = { day: string; visitor: string; jobFunction: string | null };
+type VisitRow = { day: string; visitor: string; path: string; jobFunction: string | null };
 
 function kigaliDay(date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -78,7 +79,7 @@ function tally(rows: VisitRow[], from: string, to: string): VisitTotals {
   return { people: people.size, visits };
 }
 
-export function recordVisit(visitor: string, path: string) {
+export async function recordVisit(visitor: string, path: string) {
   const day = kigaliDay();
   let role: JobFunction | null = null;
   const match = /^\/jobs\/(\d+)$/.exec(path);
@@ -95,6 +96,7 @@ export function recordVisit(visitor: string, path: string) {
        ON CONFLICT(day, visitor, path) DO NOTHING`,
     )
     .run(day, visitor, path, role, new Date().toISOString());
+  await rememberVisit({ day, visitor, path, jobFunction: role });
 }
 
 export async function getStaffStats(): Promise<StaffStats> {
@@ -106,9 +108,11 @@ export async function getStaffStats(): Promise<StaffStats> {
   const monthKeys = Array.from({ length: 6 }, (_, index) => shiftMonth(today.slice(0, 7), index - 5));
   const queryStart = `${monthKeys[0]}-01` < weekChartStart ? `${monthKeys[0]}-01` : weekChartStart;
 
-  const rows = sqlite()
-    .prepare("SELECT day, visitor, job_function AS jobFunction FROM visits WHERE day >= ?")
-    .all(queryStart) as VisitRow[];
+  const local = sqlite()
+    .prepare("SELECT day, visitor, path, job_function AS jobFunction FROM visits")
+    .all() as VisitRow[];
+  const stored = mergeVisits(local, await loadRememberedVisits());
+  const rows = stored.filter((row) => row.day >= queryStart);
 
   const weeks = Array.from({ length: 8 }, (_, index) => {
     const start = addDays(weekChartStart, index * 7);
@@ -135,9 +139,8 @@ export async function getStaffStats(): Promise<StaffStats> {
     share: functionTotal === 0 ? 0 : Math.round((functionCounts[item.id] / functionTotal) * 100),
   })).sort((a, b) => b.visits - a.visits || a.label.localeCompare(b.label));
 
-  const all = sqlite()
-    .prepare("SELECT COUNT(*) AS visits, COUNT(DISTINCT visitor) AS people FROM visits")
-    .get() as VisitTotals;
+  const people = new Set(stored.map((row) => row.visitor));
+  const all: VisitTotals = { people: people.size, visits: stored.length };
   const created = sqlite().prepare("SELECT created_at AS createdAt FROM subscribers").all() as { createdAt: string }[];
   const signupCounts = new Map(monthKeys.map((key) => [key, 0]));
   for (const row of created) {
