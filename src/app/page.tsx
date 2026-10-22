@@ -60,8 +60,7 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
               Find your next role in <span className="text-forest">Rwanda</span>.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-muted">
-              Openings collected from company career pages. Choose where the work happens, then apply on the employer’s
-              site.
+              Our vision is a Rwanda where everyone can reach the work that fits them.
             </p>
           </div>
         </section>
@@ -113,9 +112,7 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
                 Clear filters
               </Link>
             </>
-          ) : (
-            <span> · sorted by deadline, then by date posted</span>
-          )}
+          ) : null}
         </p>
 
         {ads?.slot ? <AdSlot client={ads.client} slot={ads.slot} /> : null}
@@ -124,7 +121,7 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
           <p className="mt-4 rounded-2xl border border-dashed border-line bg-card px-5 py-10 text-muted">
             {filtering
               ? "No openings match these filters."
-              : "No openings are listed yet. They show up here after company career pages are checked."}
+              : "No openings are listed yet."}
           </p>
         ) : (
           <>

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AlertNotice } from "@/components/alert-notice";
 import { ChatWidget } from "@/components/chat-widget";
 import { VisitBeacon } from "@/components/visit-beacon";
 
@@ -22,6 +23,7 @@ export function SiteFrame({
       {header}
       <div className="flex-1">{children}</div>
       {footer}
+      <AlertNotice />
       <ChatWidget />
       <VisitBeacon />
     </>

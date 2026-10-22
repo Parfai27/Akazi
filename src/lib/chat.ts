@@ -75,7 +75,7 @@ export function answerQuestion(message: string, openings: JobRecord[]) {
   }
   if (/how (do i |to )?apply|application/.test(text) && !/accountant|engineer|manager/.test(text)) {
     return {
-      reply: "Akazi does not collect applications. Open a role and use the apply button to continue on the employer’s site.",
+      reply: "Open a role and use Apply.",
       jobs: [] as ChatJob[],
     };
   }

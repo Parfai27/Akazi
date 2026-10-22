@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   if (!job) return { title: "Role not found" };
   return {
     title: `${job.title} at ${job.company}`,
-    description: `${workModeLabel(job.workMode)} role at ${job.company}. Apply on the employer site.`,
+    description: `${workModeLabel(job.workMode)} role at ${job.company}.`,
   };
 }
 
@@ -79,7 +79,7 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
 
           {!job.isActive ? (
             <p className="mt-6 rounded-xl border border-clay/30 bg-amber px-4 py-3 text-sm text-clay-deep">
-              This role is no longer listed on the company career page.
+              This role is no longer listed.
             </p>
           ) : null}
 
@@ -87,26 +87,17 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
             <div className="mt-10">
               <JobDescription text={job.description} />
             </div>
-          ) : (
-            <p className="mt-10 text-muted">
-              The career page did not include a description. Open the employer’s posting for the full text.
-            </p>
-          )}
+          ) : null}
 
           {ads?.slot ? <AdSlot client={ads.client} slot={ads.slot} /> : null}
 
-          <p className="mt-10 border-t border-line pt-4 text-sm leading-6 text-muted">
-            Collected from {job.company}’s public career page.
-            {sourceUrl ? (
-              <>
-                {" "}
-                <a className="font-medium text-forest underline-offset-4 hover:underline" href={sourceUrl} target="_blank" rel="noopener noreferrer">
-                  View the original posting
-                </a>
-                .
-              </>
-            ) : null}
-          </p>
+          {sourceUrl ? (
+            <p className="mt-10 border-t border-line pt-4 text-sm leading-6">
+              <a className="font-medium text-forest underline-offset-4 hover:underline" href={sourceUrl} target="_blank" rel="noopener noreferrer">
+                View the original posting
+              </a>
+            </p>
+          ) : null}
         </div>
 
         <aside className="h-fit rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] lg:sticky lg:top-[8.5rem]">

@@ -22,8 +22,7 @@ export const metadata: Metadata = {
     default: "Akazi — jobs in Rwanda",
     template: "%s · Akazi",
   },
-  description:
-    "Remote and on-site job openings in Rwanda, collected from public company career pages.",
+  description: "Job openings in Rwanda.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -52,9 +51,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:items-start sm:justify-between sm:px-6">
                   <div className="max-w-sm">
                     <Logo compact />
-                    <p className="mt-3 text-sm leading-6 text-card/75">
-                      Listings are gathered from public career pages. Akazi does not take applications — you apply on the
-                      employer’s site.
+                    <p className="mt-3 max-w-xs text-sm leading-6 text-card/75">
+                      Our vision is a Rwanda where everyone can reach the work that fits them.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <a

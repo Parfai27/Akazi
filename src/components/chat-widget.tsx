@@ -57,7 +57,6 @@ export function ChatWidget() {
           <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <div>
               <p className="text-lg font-extrabold text-forest">Ask Akazi</p>
-              <p className="text-xs text-muted">Answers come from the roles on this site</p>
             </div>
             <button
               type="button"

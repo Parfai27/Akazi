@@ -91,7 +91,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
       })
       .join("\n\n"),
     "",
-    "Apply on the employer’s site from the role page. Akazi only sends these notes because you agreed to email alerts.",
+    "Akazi only sends these notes because you agreed to email alerts.",
     home,
   ].join("\n");
 
@@ -151,7 +151,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
             </tr>
             <tr>
               <td style="padding:4px 24px 24px;font-family:'Segoe UI',Arial,sans-serif;color:#6b7280;font-size:13px;line-height:20px;">
-                Apply on the employer’s site from the role page. Akazi only sends these notes because you agreed to email alerts.
+                Akazi only sends these notes because you agreed to email alerts.
                 <br />
                 <a href="${home}" style="color:#1e6b58;text-decoration:none;">${escapeHtml(home.replace(/^https?:\/\//, ""))}</a>
               </td>

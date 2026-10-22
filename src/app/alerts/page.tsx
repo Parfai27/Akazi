@@ -25,8 +25,7 @@ export default function AlertsPage() {
           </p>
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-forest sm:text-5xl">Email alerts</h1>
           <p className="mt-4 text-base leading-7 text-muted">
-            Tell us what you studied and share your CV. If you agree, we email you when a new opening matches either
-            one. Akazi stores this only to make that comparison.
+            Tell us what you studied and share your CV. If you agree, we email you when a new opening matches.
           </p>
         </div>
       </div>

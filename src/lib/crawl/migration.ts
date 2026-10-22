@@ -32,7 +32,7 @@ function oneRound(close: string, roles: Vacancy[]): RawJob {
     .filter((value): value is string => Boolean(value))
     .sort();
   const description = [
-    "Openings at the Directorate General of Immigration and Emigration share one deadline. Choose a role and apply on the career page.",
+    "Openings at the Directorate General of Immigration and Emigration share one deadline.",
     "",
     "Openings",
     "",

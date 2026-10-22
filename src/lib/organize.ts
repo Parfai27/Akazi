@@ -4,7 +4,7 @@ export type JobFunction = "education" | "engineering" | "finance" | "people" | "
 export const SHELVES: { id: Shelf; label: string; hint: string }[] = [
   { id: "kigali", label: "In Kigali", hint: "On-site and hybrid" },
   { id: "country", label: "Elsewhere in Rwanda", hint: "On-site and hybrid" },
-  { id: "remote", label: "Remote", hint: "The posting says the work is remote" },
+  { id: "remote", label: "Remote", hint: "Anywhere" },
 ];
 
 export const JOB_FUNCTIONS: { id: JobFunction; label: string }[] = [
