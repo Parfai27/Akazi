@@ -86,6 +86,8 @@ export function classifyPosting(input: {
 const AFRICA_PLACES =
   /\b(africa|kenya|nigerian?|ghana|uganda|tanzania|senegal|nairobi|lagos|accra|kampala|dakar|johannesburg|cape town|abidjan|addis|lusaka|dar es salaam|ivory coast|cote d'ivoire|côte d'ivoire|burkina|mali|cameroon|morocco|rabat|zambia|ethiopia|egypt|cairo|tunisia|benin|togo|liberia|malawi|gambia|kinshasa|ouagadougou|bamako|freetown|monrovia|abuja)\b/i;
 const OPEN_REGION = /worldwide|anywhere|\bglobal\b|international|\bemea\b/i;
+const CLOSED_COUNTRY =
+  /\b(united states|u\.s\.a?\.?|\busa\b|us only|united kingdom|\buk\b|england|ireland|france|germany|canada|poland|india|australia|netherlands|spain|portugal|brazil|japan|mexico|singapore|israel|italy|sweden|norway|denmark|finland|belgium|switzerland|austria|korea|china|taiwan|philippines|indonesia|(?<!middle )east)\b/i;
 
 /** A remote role a person in Rwanda can take: anywhere, EMEA, Africa, or a plain Remote with no country lock. */
 export function remoteFromAnywhere(location: string, title: string): boolean {
@@ -96,7 +98,8 @@ export function remoteFromAnywhere(location: string, title: string): boolean {
     .toLowerCase()
     .replace(/\bremote\b|home[ -]based|office based/g, "")
     .replace(/[^a-z]/g, "");
-  return stripped.length === 0;
+  if (stripped.length > 0) return false;
+  return !CLOSED_COUNTRY.test(title);
 }
 
 export function workModeLabel(mode: string) {

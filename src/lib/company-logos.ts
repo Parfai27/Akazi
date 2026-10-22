@@ -23,7 +23,6 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   "Rising Academies": { src: "https://www.risingacademies.com/favicon.ico", cover: true },
   "Access Bank": { src: "https://www.accessbankplc.com/favicon.ico", cover: true },
   Ampersand: { src: "https://ampersand.energy/favicon.ico", cover: true },
-  Wave: { src: "https://www.wave.com/favicon.ico", cover: true },
   Canonical: { src: "https://canonical.com/favicon.ico", cover: true },
   GitLab: { src: "https://about.gitlab.com/favicon.ico", cover: true },
   PostHog: { src: "https://posthog.com/favicon.ico", cover: true },

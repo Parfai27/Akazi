@@ -193,14 +193,6 @@ export const jobSources: JobSource[] = [
     scope: "rwanda",
   },
   {
-    id: "wave",
-    name: "Wave",
-    careerUrl: "https://www.wave.com/en/careers",
-    type: "greenhouse",
-    boardToken: "wavemm1",
-    scope: "wide",
-  },
-  {
     id: "canonical",
     name: "Canonical",
     careerUrl: "https://canonical.com/careers",
