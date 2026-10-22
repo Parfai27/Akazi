@@ -1,5 +1,5 @@
 /** Public logos from each employer's own career page. `cover` fills the box when the file is already a square mark. */
-const LOGOS: Record<string, { src: string; cover?: boolean }> = {
+const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
   "One Acre Fund": { src: "/logos/one-acre-fund.svg" },
   "One Acre Fund Rwanda": {
     src: "https://recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/000/011/119/original/Tubura_Logo.png?1759831322",
@@ -31,7 +31,7 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   IDinsight: { src: "https://www.idinsight.org/favicon.ico", cover: true },
   LemFi: { src: "https://www.lemfi.com/favicon.ico", cover: true },
   Zapier: { src: "https://zapier.com/favicon.ico", cover: true },
-  micro1: { src: "https://www.micro1.ai/favicon.ico", cover: true },
+  micro1: { src: "/logos/micro1logo.png", bg: "#000000" },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },

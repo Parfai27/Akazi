@@ -34,6 +34,9 @@ const FIELD_LABELS = [
   "reporting to",
   "reports to",
   "job title",
+  "role title",
+  "role type",
+  "job type",
   "department",
   "location",
   "experience",
@@ -69,6 +72,7 @@ function isHeading(line: string) {
   if (line.length < 3 || line.length > 80) return false;
   if (/[.!?]$/.test(line) || unmatchedClose(line)) return false;
   if (/^https?:/i.test(line) || /@/.test(line) || isBullet(line)) return false;
+  if (/^[^:]{2,40}:\s+\S/.test(line)) return false;
   const letters = line.replace(/[^A-Za-z]/g, "");
   if (letters.length < 3) return false;
   const upper = letters.replace(/[^A-Z]/g, "").length;

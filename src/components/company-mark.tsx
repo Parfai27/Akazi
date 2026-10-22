@@ -20,13 +20,17 @@ export function CompanyMark({ name, size = "md" }: { name: string; size?: "md" |
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center overflow-hidden border border-line ${
-        logo.cover ? "bg-[#0b2f6b]" : "bg-white p-1.5"
+        logo.bg ? "" : logo.cover ? "bg-[#0b2f6b]" : "bg-white p-1.5"
       } ${box}`}
+      style={logo.bg ? { backgroundColor: logo.bg } : undefined}
     >
       <img
         src={logo.src}
         alt=""
         className={`size-full ${logo.cover ? "object-cover" : "object-contain"}`}
+        onLoad={(event) => {
+          if (event.currentTarget.naturalWidth === 0) setFailed(true);
+        }}
         onError={() => setFailed(true)}
       />
     </span>

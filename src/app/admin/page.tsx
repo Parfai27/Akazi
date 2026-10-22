@@ -99,8 +99,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
           {mailConfigured() ? "Alert email is ready to send." : "Alert email is not set up, so matches stay queued."}{" "}
           <Link href="/admin/mail" className="font-semibold text-forest underline-offset-4 hover:underline">
             See mail
-          </Link>
-          .
+          </Link>.
         </p>
       </header>
 
