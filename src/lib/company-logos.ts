@@ -14,6 +14,7 @@ const LOGOS: Record<string, { src: string; cover?: boolean }> = {
   },
   Zenysis: { src: "https://cdn.join.com/69ea6b90e665f00008c43a54/zenysis-technologies-logo-m.png" },
   "Directorate General of Immigration and Emigration": { src: "/logos/dgie.jpg", cover: true },
+  RwandAir: { src: "/logos/Rwandairlogo.jpg" },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },
