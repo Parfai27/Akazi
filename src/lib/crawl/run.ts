@@ -2,10 +2,11 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../../db";
 import { crawlRuns, jobs, notifications, sources } from "../../db/schema";
 import { jobSources, type JobSource } from "../sources";
-import { classifyPosting, mentionsRwanda } from "../tag";
+import { classifyPosting, mentionsRwanda, remoteFromAnywhere } from "../tag";
 import { extractDeadline } from "../url";
 import { notifyNewJobs } from "../alerts";
 import { restoreStudyRecords } from "../record-log";
+import { readAshby } from "./ashby";
 import { readGreenhouse } from "./greenhouse";
 import { readHtml } from "./html";
 import { readJsonLd } from "./jsonld";
@@ -51,6 +52,10 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
     if (!source.boardToken) throw new Error("Missing Breezy site");
     return readBreezy(source.boardToken);
   }
+  if (source.type === "ashby") {
+    if (!source.boardToken) throw new Error("Missing Ashby board");
+    return readAshby(source.boardToken);
+  }
   return readHtml(source.careerUrl);
 }
 
@@ -65,9 +70,18 @@ function keepRelevant(raw: RawJob, source: JobSource): StoredJob | null {
     hint: raw.hint,
   });
   const namedInRwanda = mentionsRwanda(`${raw.location}\n${title}`);
-  if (source.scope === "rwanda" ? !namedInRwanda : !classified.relevant) return null;
+  const openAnywhere = remoteFromAnywhere(raw.location, title);
+  const allowed =
+    source.scope === "rwanda"
+      ? namedInRwanda
+      : source.scope === "wide"
+        ? namedInRwanda || openAnywhere
+        : classified.relevant;
+  if (!allowed) return null;
+  const workMode =
+    source.scope === "wide" && openAnywhere && classified.workMode === "onsite" ? "remote" : classified.workMode;
   const deadlineAt = raw.deadlineAt ?? extractDeadline(`${title}\n${description}`);
-  return { ...raw, title, description, deadlineAt, workMode: classified.workMode, place: classified.place };
+  return { ...raw, title, description, deadlineAt, workMode, place: classified.place };
 }
 
 function errorMessage(error: unknown) {

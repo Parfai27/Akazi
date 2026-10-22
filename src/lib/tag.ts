@@ -83,6 +83,22 @@ export function classifyPosting(input: {
   return { workMode, place, relevant };
 }
 
+const AFRICA_PLACES =
+  /\b(africa|kenya|nigerian?|ghana|uganda|tanzania|senegal|nairobi|lagos|accra|kampala|dakar|johannesburg|cape town|abidjan|addis|lusaka|dar es salaam|ivory coast|cote d'ivoire|côte d'ivoire|burkina|mali|cameroon|morocco|rabat|zambia|ethiopia|egypt|cairo|tunisia|benin|togo|liberia|malawi|gambia|kinshasa|ouagadougou|bamako|freetown|monrovia|abuja)\b/i;
+const OPEN_REGION = /worldwide|anywhere|\bglobal\b|international|\bemea\b/i;
+
+/** A remote role a person in Rwanda can take: anywhere, EMEA, Africa, or a plain Remote with no country lock. */
+export function remoteFromAnywhere(location: string, title: string): boolean {
+  if (mentionsRwanda(`${location}\n${title}`)) return true;
+  if (!/\bremote\b|home[ -]based|anywhere|worldwide/i.test(location)) return false;
+  if (AFRICA_PLACES.test(location) || OPEN_REGION.test(location)) return true;
+  const stripped = location
+    .toLowerCase()
+    .replace(/\bremote\b|home[ -]based|office based/g, "")
+    .replace(/[^a-z]/g, "");
+  return stripped.length === 0;
+}
+
 export function workModeLabel(mode: string) {
   if (mode === "remote") return "Remote";
   if (mode === "hybrid") return "Hybrid";

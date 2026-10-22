@@ -10,7 +10,8 @@ export type SourceType =
   | "airtel"
   | "rssb"
   | "workable"
-  | "breezy";
+  | "breezy"
+  | "ashby";
 
 export type JobSource = {
   id: string;
@@ -26,7 +27,7 @@ export type JobSource = {
   /**
    * On a worldwide board, keep a role only when its title or location names Rwanda.
    */
-  scope?: "rwanda";
+  scope?: "rwanda" | "wide";
 };
 
 /**
@@ -48,6 +49,8 @@ export type JobSource = {
  * - rssb: the RSSB careers table. A row is kept when its status is Open.
  * - workable: boardToken is the account in apply.workable.com/{account}. Rwanda roles only.
  * - breezy: boardToken is the site in {site}.breezy.hr. Rwanda roles only. Talent pools are skipped.
+ * - ashby: boardToken is the name in jobs.ashbyhq.com/{board}. scope "wide" keeps
+ *   remote roles that are open anywhere, in EMEA, or in Africa.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -188,5 +191,77 @@ export const jobSources: JobSource[] = [
     type: "breezy",
     boardToken: "ampersand-energy",
     scope: "rwanda",
+  },
+  {
+    id: "wave",
+    name: "Wave",
+    careerUrl: "https://www.wave.com/en/careers",
+    type: "greenhouse",
+    boardToken: "wavemm1",
+    scope: "wide",
+  },
+  {
+    id: "canonical",
+    name: "Canonical",
+    careerUrl: "https://canonical.com/careers",
+    type: "greenhouse",
+    boardToken: "canonical",
+    scope: "wide",
+  },
+  {
+    id: "gitlab",
+    name: "GitLab",
+    careerUrl: "https://about.gitlab.com/jobs/",
+    type: "greenhouse",
+    boardToken: "gitlab",
+    scope: "wide",
+  },
+  {
+    id: "posthog",
+    name: "PostHog",
+    careerUrl: "https://posthog.com/careers",
+    type: "ashby",
+    boardToken: "posthog",
+    scope: "wide",
+  },
+  {
+    id: "supabase",
+    name: "Supabase",
+    careerUrl: "https://supabase.com/careers",
+    type: "ashby",
+    boardToken: "supabase",
+    scope: "wide",
+  },
+  {
+    id: "m-kopa",
+    name: "M-KOPA",
+    careerUrl: "https://www.m-kopa.com/careers",
+    type: "ashby",
+    boardToken: "m-kopa",
+    scope: "wide",
+  },
+  {
+    id: "idinsight",
+    name: "IDinsight",
+    careerUrl: "https://www.idinsight.org/careers/",
+    type: "ashby",
+    boardToken: "idinsight",
+    scope: "wide",
+  },
+  {
+    id: "lemfi",
+    name: "LemFi",
+    careerUrl: "https://www.lemfi.com/careers",
+    type: "ashby",
+    boardToken: "lemfi",
+    scope: "wide",
+  },
+  {
+    id: "zapier",
+    name: "Zapier",
+    careerUrl: "https://zapier.com/jobs",
+    type: "ashby",
+    boardToken: "zapier",
+    scope: "wide",
   },
 ];
