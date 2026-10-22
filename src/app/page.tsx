@@ -87,7 +87,7 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
           })}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-x-4 gap-y-3 pt-2">
           <FilterChip href={boardHref(filters, { fn: "" })} active={!filters.fn}>
             All work
           </FilterChip>
@@ -96,8 +96,9 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
               key={item.id}
               href={boardHref(filters, { fn: filters.fn === item.id ? "" : item.id })}
               active={filters.fn === item.id}
+              count={functionCounts[item.id]}
             >
-              {item.label} {functionCounts[item.id]}
+              {item.label}
             </FilterChip>
           ))}
         </div>
@@ -160,15 +161,34 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
   );
 }
 
-function FilterChip({ href, active, children }: { href: string; active: boolean; children: ReactNode }) {
+function FilterChip({
+  href,
+  active,
+  count,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  count?: number;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}
-      className={`inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium ${
+      className={`relative inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium ${
         active ? "bg-forest text-card" : "border border-line bg-card text-ink hover:border-forest hover:text-forest"
       }`}
     >
       {children}
+      {count != null ? (
+        <span
+          className={`absolute -top-2.5 right-0 z-10 inline-flex h-5 min-w-5 translate-x-1/2 items-center justify-center rounded-full px-1 text-[11px] font-bold leading-none ring-2 ring-wash ${
+            active ? "bg-card text-forest" : "bg-forest text-card"
+          }`}
+        >
+          {count}
+        </span>
+      ) : null}
     </Link>
   );
 }
