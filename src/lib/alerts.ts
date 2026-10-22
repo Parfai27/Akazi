@@ -1,13 +1,9 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import { db } from "../db";
 import { jobs, notifications, subscribers, type JobRecord, type SubscriberRecord } from "../db/schema";
 import { matchesProfile } from "./match";
 import { deadlineLabel } from "./url";
-
-const LOGO_CID = "akazi-logo";
 
 export type AlertResult = {
   matched: number;
@@ -27,10 +23,6 @@ function siteUrl() {
   return (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
-function logoBase64() {
-  return readFileSync(path.join(process.cwd(), "public", "akazi-logo.png")).toString("base64");
-}
-
 async function deliverViaHook(to: string, subject: string, text: string, html: string) {
   const response = await fetch(process.env.MAIL_HOOK_URL!, {
     method: "POST",
@@ -41,7 +33,6 @@ async function deliverViaHook(to: string, subject: string, text: string, html: s
       subject,
       text,
       html,
-      logo: logoBase64(),
     }),
     redirect: "follow",
     signal: AbortSignal.timeout(20_000),
@@ -72,14 +63,6 @@ async function deliverViaSmtp(to: string, subject: string, text: string, html: s
     subject,
     text,
     html,
-    attachments: [
-      {
-        filename: "akazi-logo.png",
-        path: path.join(process.cwd(), "public", "akazi-logo.png"),
-        cid: LOGO_CID,
-        contentDisposition: "inline",
-      },
-    ],
   });
 }
 
@@ -96,6 +79,43 @@ function remember(subscriberId: number, jobId: number, status: string, detail: s
       set: { status, detail },
     })
     .run();
+}
+
+function subjectLine(openings: JobRecord[]) {
+  if (openings.length === 1) return `Akazi: ${openings[0]?.title ?? "New opening"}`;
+  return `Akazi: ${openings.length} openings`;
+}
+
+function logoMark() {
+  const bar = (height: number) =>
+    `<td width="8" height="${height}" valign="bottom" bgcolor="#ffffff" style="width:8px;height:${height}px;background-color:#ffffff;border-radius:4px;font-size:1px;line-height:${height}px;">&nbsp;</td>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="44" height="44" style="display:inline-table;width:44px;height:44px;vertical-align:middle;border-radius:10px;">
+    <tr>
+      <td width="44" height="44" align="center" valign="bottom" bgcolor="#1e6b58" style="width:44px;height:44px;background-color:#1e6b58;border-radius:10px;padding:0 0 6px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            ${bar(14)}
+            <td width="3" style="width:3px;font-size:1px;line-height:1px;">&nbsp;</td>
+            ${bar(20)}
+            <td width="3" style="width:3px;font-size:1px;line-height:1px;">&nbsp;</td>
+            <td width="8" valign="bottom" style="width:8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="8" height="8" bgcolor="#f0b429" style="width:8px;height:8px;background-color:#f0b429;border-radius:4px;font-size:1px;line-height:8px;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td height="2" style="height:2px;font-size:1px;line-height:2px;">&nbsp;</td>
+                </tr>
+                <tr>
+                  ${bar(22)}
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`;
 }
 
 function escapeHtml(value: string) {
@@ -145,7 +165,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e3ebe7;border-radius:14px;">
               <tr>
                 <td style="padding:18px 18px 8px;font-family:'Segoe UI',Arial,sans-serif;">
-                  <a href="${href}" style="color:#171a21;font-size:18px;font-weight:800;line-height:24px;text-decoration:none;">${escapeHtml(job.title)}</a>
+                  <div style="color:#171a21;font-size:18px;font-weight:800;line-height:24px;">${escapeHtml(job.title)}</div>
                   <div style="margin-top:4px;color:#1e6b58;font-size:14px;font-weight:700;">${escapeHtml(job.company)}</div>
                   <div style="margin-top:8px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(where)}</div>
                   <div style="margin-top:2px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(deadlineLabel(job.deadlineAt))}</div>
@@ -172,7 +192,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
           <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;">
             <tr>
               <td style="background:#1e6b58;padding:22px 24px;">
-                <img src="cid:${LOGO_CID}" width="44" height="44" alt="" style="display:inline-block;border:0;border-radius:10px;vertical-align:middle;" />
+                ${logoMark()}
                 <span style="display:inline-block;margin-left:12px;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.04em;vertical-align:middle;">Akazi</span>
               </td>
             </tr>
@@ -216,7 +236,7 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
       const message = alertMessage(person, openings);
       await deliver(
         person.email,
-        openings.length === 1 ? `A role on Akazi matches you: ${openings[0].title}` : `${openings.length} Akazi roles match you`,
+        subjectLine(openings),
         message.text,
         message.html,
       );
@@ -306,7 +326,7 @@ export async function flushQueuedAlerts() {
       const message = alertMessage(person, openings);
       await deliver(
         person.email,
-        openings.length === 1 ? `A role on Akazi matches you: ${openings[0]?.title ?? "New role"}` : `${openings.length} Akazi roles match you`,
+        subjectLine(openings),
         message.text,
         message.html,
       );

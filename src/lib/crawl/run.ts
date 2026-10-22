@@ -11,6 +11,7 @@ import { readJsonLd } from "./jsonld";
 import { readLever } from "./lever";
 import { readMigration } from "./migration";
 import { readMifotra } from "./mifotra";
+import { readRwandAir } from "./rwandair";
 import type { RawJob } from "./types";
 
 const DESCRIPTION_LIMIT = 20000;
@@ -32,6 +33,7 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
   if (source.type === "jsonld") return readJsonLd(source.careerUrl);
   if (source.type === "mifotra") return readMifotra();
   if (source.type === "migration") return readMigration();
+  if (source.type === "rwandair") return readRwandAir();
   return readHtml(source.careerUrl);
 }
 
