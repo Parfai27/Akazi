@@ -1,4 +1,5 @@
 import { htmlToText } from "../html-text";
+import { micro1ReferralApplyUrl } from "../micro1-referral";
 import { safeHttpUrl } from "../url";
 import { isoDate, sleep } from "./http";
 import type { RawJob } from "./types";
@@ -69,7 +70,8 @@ export async function readMicro1(): Promise<RawJob[]> {
     });
     const detail = payload.data;
     const title = detail?.job_name?.trim();
-    const applyUrl = safeHttpUrl(detail?.apply_url);
+    const listed = safeHttpUrl(detail?.apply_url);
+    const applyUrl = (detail?.job_id ? micro1ReferralApplyUrl(detail.job_id) : null) ?? listed;
     if (!detail?.job_id || !title || !applyUrl) continue;
     const location = locationFrom(detail);
     jobs.push({
@@ -78,7 +80,7 @@ export async function readMicro1(): Promise<RawJob[]> {
       location,
       description: detail.job_description ? htmlToText(detail.job_description) : "",
       applyUrl,
-      sourceUrl: applyUrl,
+      sourceUrl: listed ?? applyUrl,
       postedAt: isoDate(detail.date_posted),
       hint: /\bremote\b|anywhere|worldwide|home[ -]based/i.test(location) ? "remote" : undefined,
     });
