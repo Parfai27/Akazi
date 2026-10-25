@@ -14,6 +14,8 @@ import { readLever } from "./lever";
 import { readAirtel } from "./airtel";
 import { readBreezy } from "./breezy";
 import { readMigration } from "./migration";
+import { readKigaliStore } from "./kigalistore";
+import { readLinkedIn } from "./linkedin";
 import { readMicro1 } from "./micro1";
 import { readMifotra } from "./mifotra";
 import { readMtn } from "./mtn";
@@ -58,6 +60,8 @@ async function readSource(source: JobSource): Promise<RawJob[]> {
     return readAshby(source.boardToken);
   }
   if (source.type === "micro1") return readMicro1();
+  if (source.type === "kigalistore") return readKigaliStore();
+  if (source.type === "linkedin") return readLinkedIn();
   return readHtml(source.careerUrl);
 }
 

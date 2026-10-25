@@ -12,7 +12,9 @@ export type SourceType =
   | "workable"
   | "breezy"
   | "ashby"
-  | "micro1";
+  | "micro1"
+  | "kigalistore"
+  | "linkedin";
 
 export type JobSource = {
   id: string;
@@ -54,6 +56,8 @@ export type JobSource = {
  *   remote roles that are open anywhere, in EMEA, or in Africa.
  * - micro1: the public expert board at micro1.ai. scope "wide" keeps a role when
  *   its location line is remote and not locked to one country.
+ * - kigalistore: the public Rwanda board at kigalistore.com. Each job page is one opening.
+ * - linkedin: LinkedIn's public Rwanda job search. Apply opens the LinkedIn posting.
  *
  * Example:
  * { id: "acme", name: "Acme", careerUrl: "https://example.com/careers", type: "jsonld" }
@@ -265,5 +269,19 @@ export const jobSources: JobSource[] = [
     careerUrl: "https://www.micro1.ai/experts/opportunities",
     type: "micro1",
     scope: "wide",
+  },
+  {
+    id: "kigalistore",
+    name: "KigaliStore",
+    careerUrl: "https://kigalistore.com/jobs-in-rwanda",
+    type: "kigalistore",
+    scope: "rwanda",
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    careerUrl: "https://www.linkedin.com/jobs/search?location=Rwanda",
+    type: "linkedin",
+    scope: "rwanda",
   },
 ];
