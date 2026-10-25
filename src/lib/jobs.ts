@@ -7,6 +7,7 @@ import {
   SHELVES,
   compareOpenings,
   deadlineKind,
+  deadlineOpen,
   jobFunction,
   shelfOf,
   type JobFunction,
@@ -31,7 +32,7 @@ function matchesQuery(job: JobRecord, q: string) {
 
 export async function getBoard(filters: JobFilters) {
   await io();
-  const active = db.select().from(jobs).where(eq(jobs.isActive, true)).all();
+  const active = db.select().from(jobs).where(eq(jobs.isActive, true)).all().filter((job) => deadlineOpen(job.deadlineAt));
   const q = filters.q?.trim().toLowerCase() ?? "";
   const shelf = filters.shelf && SHELF_IDS.has(filters.shelf as Shelf) ? (filters.shelf as Shelf) : "";
   const fn = filters.fn && FUNCTION_IDS.has(filters.fn as JobFunction) ? (filters.fn as JobFunction) : "";
@@ -83,7 +84,7 @@ export async function getJob(id: number): Promise<JobRecord | null> {
   await io();
   if (!Number.isInteger(id) || id <= 0) return null;
   const job = db.select().from(jobs).where(eq(jobs.id, id)).get();
-  if (!job?.isActive) return null;
+  if (!job?.isActive || !deadlineOpen(job.deadlineAt)) return null;
   return job;
 }
 

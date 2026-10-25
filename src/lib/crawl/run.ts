@@ -2,6 +2,7 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../../db";
 import { crawlRuns, jobs, notifications, sources } from "../../db/schema";
 import { jobSources, type JobSource } from "../sources";
+import { deadlineKind } from "../organize";
 import { classifyPosting, mentionsRwanda, remoteFromAnywhere } from "../tag";
 import { extractDeadline } from "../url";
 import { notifyNewJobs } from "../alerts";
@@ -87,6 +88,7 @@ function keepRelevant(raw: RawJob, source: JobSource): StoredJob | null {
   const workMode =
     source.scope === "wide" && openAnywhere && classified.workMode === "onsite" ? "remote" : classified.workMode;
   const deadlineAt = raw.deadlineAt ?? extractDeadline(`${title}\n${description}`);
+  if (deadlineKind(deadlineAt) === "passed") return null;
   return { ...raw, title, description, deadlineAt, workMode, place: classified.place };
 }
 

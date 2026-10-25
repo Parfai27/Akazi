@@ -78,6 +78,10 @@ export function deadlineKind(iso: string | null, today = startOfToday()): "soon"
   return end - today <= 21 * 86_400_000 ? "soon" : "later";
 }
 
+export function deadlineOpen(iso: string | null, today = startOfToday()): boolean {
+  return deadlineKind(iso, today) !== "passed";
+}
+
 export function compareOpenings<T extends Dated>(a: T, b: T, today = startOfToday()) {
   const rank = (job: Dated) => {
     const end = time(job.deadlineAt);

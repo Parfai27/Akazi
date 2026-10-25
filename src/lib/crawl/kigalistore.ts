@@ -75,15 +75,53 @@ function companyOf(job: JsonLd): string {
   return typeof name === "string" ? name.trim() : "";
 }
 
+function externalSite(value: string | undefined, base: string): string | null {
+  const url = safeHttpUrl(value, base);
+  if (!url) return null;
+  const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  const blocked = [
+    "kigalistore.com",
+    "whatsapp.com",
+    "wa.me",
+    "facebook.com",
+    "fb.com",
+    "instagram.com",
+    "twitter.com",
+    "x.com",
+    "linkedin.com",
+    "t.me",
+    "youtube.com",
+    "youtu.be",
+    "google.com",
+    "schema.org",
+  ];
+  if (blocked.some((name) => host === name || host.endsWith(`.${name}`))) return null;
+  return url;
+}
+
+function employerApply(html: string, pageUrl: string): string | null {
+  const $ = cheerio.load(html);
+  const button = $(".detail-apply-card a[href]").first().attr("href");
+  const direct = externalSite(button, pageUrl);
+  if (direct) return direct;
+  const links = $(".detail-content-card a[href]")
+    .map((_, element) => $(element).attr("href") ?? "")
+    .get();
+  for (const href of links) {
+    const url = externalSite(href, pageUrl);
+    if (url) return url;
+  }
+  return null;
+}
 function postingFrom(html: string, pageUrl: string): RawJob | null {
   const job = blocks(html).find((block) => block["@type"] === "JobPosting");
   if (!job) return null;
   const title = typeof job.title === "string" ? decode(job.title).replace(/\s+/g, " ") : "";
-  const applyUrl = safeHttpUrl(typeof job.url === "string" ? job.url : pageUrl, pageUrl);
+  const applyUrl = employerApply(html, pageUrl);
   if (!title || !applyUrl) return null;
   const description = typeof job.description === "string" ? decode(htmlToText(job.description)) : "";
   return {
-    externalId: applyUrl,
+    externalId: pageUrl,
     title,
     company: decode(companyOf(job)).replace(/\s+/g, " "),
     location: locationOf(job),

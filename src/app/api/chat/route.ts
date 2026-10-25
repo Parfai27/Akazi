@@ -3,6 +3,7 @@ import { connection, NextResponse } from "next/server";
 import { db } from "@/db";
 import { jobs } from "@/db/schema";
 import { answerQuestion } from "@/lib/chat";
+import { deadlineOpen } from "@/lib/organize";
 
 export async function POST(request: Request) {
   await connection();
@@ -13,6 +14,11 @@ export async function POST(request: Request) {
   } catch {
     message = "";
   }
-  const openings = db.select().from(jobs).where(eq(jobs.isActive, true)).all();
+  const openings = db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.isActive, true))
+    .all()
+    .filter((job) => deadlineOpen(job.deadlineAt));
   return NextResponse.json(answerQuestion(message, openings));
 }

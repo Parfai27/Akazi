@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { db } from "../db";
 import { jobs, notifications, subscribers, type JobRecord, type SubscriberRecord } from "../db/schema";
 import { matchesProfile } from "./match";
+import { deadlineOpen } from "./organize";
 import { rememberMail } from "./record-log";
 import { deadlineLabel } from "./url";
 
@@ -308,14 +309,24 @@ function unseenMatches(person: SubscriberRecord, candidates: JobRecord[]) {
 export async function matchSubscriber(subscriberId: number): Promise<AlertResult> {
   const person = db.select().from(subscribers).where(eq(subscribers.id, subscriberId)).get();
   if (!person) return { matched: 0, sent: 0, queued: 0 };
-  const active = db.select().from(jobs).where(eq(jobs.isActive, true)).all();
+  const active = db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.isActive, true))
+    .all()
+    .filter((job) => deadlineOpen(job.deadlineAt));
   return recordAndSend(person, unseenMatches(person, active));
 }
 
 export async function notifyNewJobs(jobIds: number[]) {
   await flushQueuedAlerts();
   if (jobIds.length === 0) return "";
-  const openings = db.select().from(jobs).where(and(eq(jobs.isActive, true), inArray(jobs.id, jobIds))).all();
+  const openings = db
+    .select()
+    .from(jobs)
+    .where(and(eq(jobs.isActive, true), inArray(jobs.id, jobIds)))
+    .all()
+    .filter((job) => deadlineOpen(job.deadlineAt));
   const people = db.select().from(subscribers).all();
   if (people.length === 0 || openings.length === 0) return "";
 
@@ -344,7 +355,12 @@ export async function flushQueuedAlerts() {
   for (const [subscriberId, jobIds] of byPerson) {
     const person = db.select().from(subscribers).where(eq(subscribers.id, subscriberId)).get();
     if (!person) continue;
-    const openings = db.select().from(jobs).where(inArray(jobs.id, jobIds)).all();
+    const openings = db
+      .select()
+      .from(jobs)
+      .where(inArray(jobs.id, jobIds))
+      .all()
+      .filter((job) => job.isActive && deadlineOpen(job.deadlineAt));
     try {
       const message = alertMessage(person, openings);
       await deliver(
