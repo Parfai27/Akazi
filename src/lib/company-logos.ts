@@ -32,6 +32,39 @@ const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
   LemFi: { src: "https://www.lemfi.com/favicon.ico", cover: true },
   Zapier: { src: "https://zapier.com/favicon.ico", cover: true },
   micro1: { src: "/logos/micro1logo.png", bg: "#000000" },
+  "ISHEMA HUB Limited": { src: "/logos/ishema.png", cover: true },
+  "Africa Improved Foods Rwanda": { src: "/logos/africa-improved-foods.png" },
+  "Trinity Musha Mines Ltd": { src: "/logos/trinity-metals.png" },
+  "BRAC Rwanda": { src: "/logos/brac-rwanda.png", cover: true },
+  "SOS Children's Villages Rwanda": { src: "/logos/sos.png" },
+  "International Organization for Migration (IOM)": { src: "/logos/iom.png" },
+  "GIZ Rwanda": { src: "/logos/giz-rwanda.png" },
+  "University of Global Health Equity": { src: "/logos/ughe.png" },
+  "SAFINTRA Rwanda Ltd - Member of The Safal Group": { src: "/logos/safintra-rwanda-ltd-member-of-the-safal-group.png" },
+  "African Export-Import Bank (Afreximbank)": { src: "/logos/african-export-import-bank-afreximbank.png", cover: true },
+  ContourGlobal: { src: "/logos/contourglobal.png" },
+  "Mota-Engil": { src: "/logos/mota-engil.svg", cover: true },
+  "The HEINEKEN Company": { src: "/logos/heineken.png" },
+  TechnoServe: { src: "/logos/technoserve.png", cover: true },
+  "Rogers Corporation": { src: "/logos/rogers-corporation.png" },
+  "Marriott International": { src: "/logos/marriott.png" },
+  "Kigali Marriott Hotel": { src: "/logos/marriott.png" },
+  "Four Points by Sheraton": { src: "/logos/marriott.png" },
+  "Radisson Hotel Group": { src: "/logos/radisson.png" },
+  "Right Seat": { src: "/logos/right-seat.png" },
+  "Vital Strategies": { src: "/logos/vital-strategies.png" },
+  TeKnowledge: { src: "/logos/teknowledge.svg" },
+  Finch: { src: "/logos/finch.png", cover: true },
+  "Africa Global Logistics": { src: "/logos/africa-global-logistics.png" },
+  "Ecobank Transnational Incorporated": { src: "/logos/ecobank-transnational-incorporated.png" },
+  GiveDirectly: { src: "/logos/givedirectly.png", bg: "#000000" },
+  "rare finds": { src: "/logos/rare-finds.jpg" },
+  "Clinton Health Access Initiative, Inc.": { src: "/logos/clinton-health-access-initiative-inc.webp" },
+  "Innovations for Poverty Action": { src: "/logos/ipa.png", cover: true },
+  "SLR Consulting": { src: "/logos/slr-consulting.png", cover: true },
+  "World Vision International Rwanda": { src: "/logos/worldvision.png" },
+  "Save the Children": { src: "/logos/save-the-children.png" },
+  Viamo: { src: "/logos/viamo.png" },
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },
@@ -42,10 +75,14 @@ const GOVERNMENT_LOGO = { src: "/logos/rwanda-coat.png" };
 export function companyLogo(name: string) {
   return (
     LOGOS[name] ??
-    (/\bnational institute of statistics\b|\bnisr\b/i.test(name)
-      ? LOGOS.NISR
-      : /\b(district|ministry|board|commission|agency)\b/i.test(name)
-        ? GOVERNMENT_LOGO
-        : null)
+    (/\brwandair\b/i.test(name)
+      ? LOGOS.RwandAir
+      : /\bimmigration and emigration\b/i.test(name)
+        ? LOGOS["Directorate General of Immigration and Emigration"]
+        : /\bnational institute of statistics\b|\bnisr\b/i.test(name)
+          ? LOGOS.NISR
+          : /\b(district|ministry|board|commission|agency)\b/i.test(name)
+            ? GOVERNMENT_LOGO
+            : null)
   );
 }
