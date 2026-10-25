@@ -1,5 +1,4 @@
 import * as cheerio from "cheerio";
-import { htmlToText } from "../html-text";
 import { safeHttpUrl } from "../url";
 import { fetchText, sleep } from "./http";
 import type { RawJob } from "./types";
@@ -8,7 +7,7 @@ const SEARCH = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/
 
 type ListedJob = RawJob & { companySlug: string };
 
-function companySlug(href: string | undefined): string {
+function companySlugFrom(href: string | undefined): string {
   if (!href) return "";
   try {
     const match = new URL(href).pathname.match(/\/company\/([^/]+)/i);
@@ -28,17 +27,16 @@ function jobsFrom(html: string): ListedJob[] {
     const title = card.find(".base-search-card__title").first().text().replace(/\s+/g, " ").trim();
     const company = card.find(".base-search-card__subtitle").first().text().replace(/\s+/g, " ").trim();
     const location = card.find(".job-search-card__location").first().text().replace(/\s+/g, " ").trim();
-    const slug = companySlug(card.find("a[href*='/company/']").attr("href"));
+    const slug = companySlugFrom(card.find("a[href*='/company/']").attr("href"));
     if (!/^\d+$/.test(id) || !title || !slug) return;
-    const posting = `https://www.linkedin.com/jobs/view/${id}`;
     jobs.push({
       externalId: id,
       title,
       company,
       location,
       description: "",
-      applyUrl: posting,
-      sourceUrl: posting,
+      applyUrl: "",
+      sourceUrl: "",
       postedAt: null,
       hint: /\bremote\b|home[ -]based/i.test(`${location}\n${title}`) ? "remote" : undefined,
       companySlug: slug,
@@ -54,6 +52,20 @@ function companyWebsite(html: string): string | null {
   const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
   if (/(^|\.)linkedin\.com$|(^|\.)licdn\.com$|(^|\.)bing\.com$/.test(host)) return null;
   return url;
+}
+
+async function readCompany(slug: string): Promise<string | null> {
+  const response = await fetch(`https://www.linkedin.com/company/${slug}`, {
+    headers: {
+      accept: "text/html",
+      "user-agent": "AkaziBot/1.0 (public career-page collector)",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(12000),
+  });
+  if (response.status === 429) throw new Error(`429 for ${slug}`);
+  if (!response.ok) return null;
+  return companyWebsite(await response.text());
 }
 
 export async function readLinkedIn(): Promise<RawJob[]> {
@@ -76,19 +88,23 @@ export async function readLinkedIn(): Promise<RawJob[]> {
       seen.add(job.externalId);
       listed.push(job);
     }
-    await sleep(250);
+    await sleep(200);
   }
   if (listed.length === 0) throw new Error("LinkedIn returned no jobs");
 
   const websites = new Map<string, string | null>();
+  let blocked = false;
   for (const slug of new Set(listed.map((job) => job.companySlug))) {
-    await sleep(300);
+    if (blocked) break;
+    await sleep(200);
     try {
-      const html = await fetchText(`https://www.linkedin.com/company/${slug}`, "text/html");
-      websites.set(slug, companyWebsite(html));
+      websites.set(slug, await readCompany(slug));
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      if (message.startsWith("429")) throw error;
+      if (message.startsWith("429") || message.includes("Timeout")) {
+        blocked = true;
+        break;
+      }
       websites.set(slug, null);
     }
   }
@@ -97,23 +113,18 @@ export async function readLinkedIn(): Promise<RawJob[]> {
   for (const job of listed) {
     const applyUrl = websites.get(job.companySlug);
     if (!applyUrl) continue;
-    const { companySlug: _slug, ...opening } = job;
-    jobs.push({ ...opening, applyUrl, sourceUrl: applyUrl });
+    jobs.push({
+      externalId: job.externalId,
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      description: job.description,
+      applyUrl,
+      sourceUrl: applyUrl,
+      postedAt: job.postedAt,
+      hint: job.hint,
+    });
   }
   if (jobs.length === 0) throw new Error("LinkedIn jobs had no employer website");
-
-  for (const job of jobs) {
-    await sleep(300);
-    try {
-      const html = await fetchText(
-        `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${job.externalId}`,
-        "text/html",
-      );
-      const markup = cheerio.load(html)(".show-more-less-html__markup, .description__text").first().html();
-      if (markup) job.description = htmlToText(markup);
-    } catch {
-      break;
-    }
-  }
   return jobs;
 }
