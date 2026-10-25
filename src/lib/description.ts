@@ -1,3 +1,5 @@
+import { stripAdSnippets } from "./html-text";
+
 const ACRONYMS = new Set(["ALU", "HR", "IT", "CV", "NGO", "UN", "CEO", "GTM", "USA", "UK", "AI", "QA", "EMEA"]);
 
 export type DescriptionBlock =
@@ -263,7 +265,7 @@ function looksLikeDutyList(text: string) {
  * Sources only need to store the posting text.
  */
 export function descriptionBlocks(text: string): DescriptionBlock[] {
-  const lines = unwrapLines(normalizeBullets(text).replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
+  const lines = unwrapLines(normalizeBullets(stripAdSnippets(text)).replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
   const blocks: DescriptionBlock[] = [];
 
   const pushParagraph = (value: string) => {
