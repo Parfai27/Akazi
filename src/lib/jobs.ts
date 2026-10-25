@@ -80,10 +80,10 @@ export async function getBoard(filters: JobFilters) {
   };
 }
 
-export async function getJob(id: number): Promise<JobRecord | null> {
+export async function getJob(ref: string): Promise<JobRecord | null> {
   await io();
-  if (!Number.isInteger(id) || id <= 0) return null;
-  const job = db.select().from(jobs).where(eq(jobs.id, id)).get();
+  if (!/^[0-9a-f]{16}$/.test(ref)) return null;
+  const job = db.select().from(jobs).where(eq(jobs.publicId, ref)).get();
   if (!job?.isActive || !deadlineOpen(job.deadlineAt)) return null;
   return job;
 }

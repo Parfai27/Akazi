@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { jobKey } from "../lib/job-key";
 import * as schema from "./schema";
 
 const globalForDb = globalThis as unknown as {
@@ -25,6 +26,7 @@ function openDatabase() {
 
     CREATE TABLE IF NOT EXISTS jobs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      public_id TEXT NOT NULL,
       source_id TEXT NOT NULL,
       external_id TEXT NOT NULL,
       title TEXT NOT NULL,
@@ -101,6 +103,15 @@ function openDatabase() {
   if (!jobColumns.some((column) => column.name === "deadline_at")) {
     sqlite.exec("ALTER TABLE jobs ADD COLUMN deadline_at TEXT");
   }
+  if (!jobColumns.some((column) => column.name === "public_id")) {
+    sqlite.exec("ALTER TABLE jobs ADD COLUMN public_id TEXT");
+  }
+  const missing = sqlite
+    .prepare("SELECT id, source_id AS sourceId, external_id AS externalId FROM jobs WHERE public_id IS NULL OR public_id = ''")
+    .all() as { id: number; sourceId: string; externalId: string }[];
+  const assign = sqlite.prepare("UPDATE jobs SET public_id = ? WHERE id = ?");
+  for (const row of missing) assign.run(jobKey(row.sourceId, row.externalId), row.id);
+  sqlite.exec("CREATE UNIQUE INDEX IF NOT EXISTS jobs_public_id ON jobs (public_id)");
   return sqlite;
 }
 

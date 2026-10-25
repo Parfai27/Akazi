@@ -83,12 +83,12 @@ function tally(rows: VisitRow[], from: string, to: string): VisitTotals {
 export async function recordVisit(visitor: string, path: string) {
   const day = kigaliDay();
   let role: JobFunction | null = null;
-  const match = /^\/jobs\/(\d+)$/.exec(path);
+  const match = /^\/jobs\/([0-9a-f]{16})$/.exec(path);
   let viewed: { sourceId: string; externalId: string } | null = null;
   if (match) {
     const job = sqlite()
-      .prepare("SELECT title, source_id AS sourceId, external_id AS externalId FROM jobs WHERE id = ?")
-      .get(Number(match[1])) as { title: string; sourceId: string; externalId: string } | undefined;
+      .prepare("SELECT title, source_id AS sourceId, external_id AS externalId FROM jobs WHERE public_id = ?")
+      .get(match[1]) as { title: string; sourceId: string; externalId: string } | undefined;
     if (job) {
       role = jobFunction(job.title);
       viewed = { sourceId: job.sourceId, externalId: job.externalId };

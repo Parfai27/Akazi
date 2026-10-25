@@ -6,6 +6,7 @@ import { loadRememberedVisits, mergeVisits } from "@/lib/visit-log";
 
 export type OpeningRow = {
   id: number;
+  href: string;
   title: string;
   company: string;
   role: string;
@@ -55,6 +56,7 @@ export type RecentOpen = {
 
 type JobSql = {
   id: number;
+  publicId: string;
   title: string;
   company: string;
   sourceId: string;
@@ -69,7 +71,7 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
   await restoreStudyRecords();
   const jobs = sqlite()
     .prepare(
-      `SELECT id, title, company, source_id AS sourceId, external_id AS externalId,
+      `SELECT id, public_id AS publicId, title, company, source_id AS sourceId, external_id AS externalId,
               deadline_at AS deadlineAt, is_active AS isActive, is_new AS isNew
        FROM jobs`,
     )
@@ -78,25 +80,25 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
     .prepare("SELECT day, visitor, path, job_function AS jobFunction FROM visits")
     .all() as { day: string; visitor: string; path: string; jobFunction: string | null }[];
   const visits = mergeVisits(local, await loadRememberedVisits());
-  const byId = new Map<number, number>();
+  const byKey = new Map<string, number>();
   for (const visit of visits) {
-    if (!visit.path.startsWith("/jobs/")) continue;
-    const id = Number(visit.path.slice("/jobs/".length));
-    if (!Number.isInteger(id)) continue;
-    byId.set(id, (byId.get(id) ?? 0) + 1);
+    const key = /^\/jobs\/([0-9a-f]{16})$/.exec(visit.path)?.[1];
+    if (!key) continue;
+    byKey.set(key, (byKey.get(key) ?? 0) + 1);
   }
   const rows = [];
   for (const job of jobs) {
     const kept = await jobViewerCount(job.sourceId, job.externalId);
     rows.push({
       id: job.id,
+      href: `/jobs/${job.publicId}`,
       title: job.title,
       company: job.company,
       role: functionLabel(jobFunction(job.title)),
       active: Boolean(job.isActive),
       isNew: Boolean(job.isNew),
       deadline: job.deadlineAt,
-      views: kept ?? byId.get(job.id) ?? 0,
+      views: kept ?? byKey.get(job.publicId) ?? 0,
     });
   }
   return rows
@@ -217,14 +219,16 @@ export async function getRecentOpens(): Promise<RecentOpen[]> {
     else grouped.set(key, { path: visit.path, day: visit.day, views: 1 });
   }
   const rows = [...grouped.values()].sort((a, b) => b.day.localeCompare(a.day) || b.views - a.views).slice(0, 8);
-  const ids = rows.map((row) => Number(row.path.slice("/jobs/".length))).filter((id) => Number.isInteger(id));
-  if (ids.length === 0) return [];
+  const keys = rows
+    .map((row) => /^\/jobs\/([0-9a-f]{16})$/.exec(row.path)?.[1] ?? "")
+    .filter(Boolean);
+  if (keys.length === 0) return [];
   const jobs = sqlite()
-    .prepare(`SELECT id, title, company FROM jobs WHERE id IN (${ids.map(() => "?").join(",")})`)
-    .all(...ids) as { id: number; title: string; company: string }[];
-  const byId = new Map(jobs.map((job) => [job.id, job]));
+    .prepare(`SELECT public_id AS publicId, title, company FROM jobs WHERE public_id IN (${keys.map(() => "?").join(",")})`)
+    .all(...keys) as { publicId: string; title: string; company: string }[];
+  const byKey = new Map(jobs.map((job) => [job.publicId, job]));
   return rows.flatMap((row) => {
-    const job = byId.get(Number(row.path.slice("/jobs/".length)));
+    const job = byKey.get(/^\/jobs\/([0-9a-f]{16})$/.exec(row.path)?.[1] ?? "");
     if (!job) return [];
     return [{ day: row.day, title: job.title, company: job.company, href: row.path, views: Number(row.views) }];
   });

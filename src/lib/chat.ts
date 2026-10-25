@@ -1,9 +1,10 @@
 import type { JobRecord } from "@/db/schema";
+import { jobKey } from "@/lib/job-key";
 import { deadlineLabel, formatPosted } from "@/lib/url";
 import { placeLabel, workModeLabel } from "@/lib/tag";
 
 export type ChatJob = {
-  id: number;
+  id: string;
   title: string;
   company: string;
   deadline: string;
@@ -44,7 +45,7 @@ function words(text: string) {
 function toChatJob(job: JobRecord): ChatJob {
   const posted = formatPosted(job.postedAt);
   return {
-    id: job.id,
+    id: job.publicId || jobKey(job.sourceId, job.externalId),
     title: job.title,
     company: job.company,
     deadline: deadlineLabel(job.deadlineAt),

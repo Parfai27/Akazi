@@ -172,7 +172,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
               {fresh.slice(0, 8).map((job) => (
                 <li key={job.id} className="flex items-baseline justify-between gap-3 py-3">
                   <div>
-                    <Link href={`/jobs/${job.id}`} className="font-semibold underline-offset-4 hover:underline">
+                    <Link href={`/jobs/${job.publicId}`} className="font-semibold underline-offset-4 hover:underline">
                       {job.title}
                     </Link>
                     <p className="text-sm text-muted">

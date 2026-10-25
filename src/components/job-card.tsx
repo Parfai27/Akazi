@@ -3,6 +3,7 @@ import type { JobRecord } from "@/db/schema";
 import { CompanyMark } from "@/components/company-mark";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
 import { workModeLabel } from "@/lib/tag";
+import { jobPath } from "@/lib/job-key";
 import { deadlineShort } from "@/lib/url";
 
 export function JobCard({ job }: { job: JobRecord }) {
@@ -12,7 +13,7 @@ export function JobCard({ job }: { job: JobRecord }) {
   return (
     <li className="h-full">
       <Link
-        href={`/jobs/${job.id}`}
+        href={jobPath(job)}
         className="group flex h-full flex-col rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(30,107,88,0.12)]"
       >
         <div className="flex items-center gap-3">

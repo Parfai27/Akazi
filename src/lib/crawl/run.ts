@@ -6,6 +6,7 @@ import { deadlineKind } from "../organize";
 import { classifyPosting, mentionsRwanda, remoteFromAnywhere } from "../tag";
 import { extractDeadline } from "../url";
 import { notifyNewJobs } from "../alerts";
+import { jobKey } from "../job-key";
 import { restoreStudyRecords } from "../record-log";
 import { readAshby } from "./ashby";
 import { readGreenhouse } from "./greenhouse";
@@ -160,6 +161,7 @@ function saveSourceJobs(source: JobSource, openings: StoredJob[], seenAt: string
         .values({
           sourceId: source.id,
           externalId: opening.externalId,
+          publicId: jobKey(source.id, opening.externalId),
           title: opening.title,
           company: opening.company?.trim() || source.name,
           location: opening.location,

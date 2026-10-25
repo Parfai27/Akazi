@@ -19,7 +19,7 @@ type Params = { id: string };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const { id } = await params;
-  const job = await getJob(Number(id));
+  const job = await getJob(id);
   if (!job) return { title: "Role not found" };
   return {
     title: `${job.title} at ${job.company}`,
@@ -37,7 +37,7 @@ export default function JobPage({ params }: { params: Promise<Params> }) {
 
 async function JobDetail({ params }: { params: Promise<Params> }) {
   const { id } = await params;
-  const job = await getJob(Number(id));
+  const job = await getJob(id);
   if (!job) notFound();
 
   const posted = formatPosted(job.postedAt);
@@ -55,7 +55,7 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
   const keptViewers = await jobViewerCount(job.sourceId, job.externalId);
   const localViewers = sqlite()
     .prepare("SELECT COUNT(DISTINCT visitor) AS total FROM visits WHERE path = ?")
-    .get(`/jobs/${job.id}`) as { total: number } | undefined;
+    .get(`/jobs/${job.publicId}`) as { total: number } | undefined;
   const viewers = keptViewers ?? Number(localViewers?.total ?? 0);
 
   return (

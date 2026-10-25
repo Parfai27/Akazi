@@ -118,7 +118,7 @@ export function OpeningTable({ rows }: { rows: OpeningRow[] }) {
               slice.map((row) => (
                 <tr key={row.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
-                    <Link href={`/jobs/${row.id}`} className="font-semibold underline-offset-4 hover:underline">
+                    <Link href={row.href} className="font-semibold underline-offset-4 hover:underline">
                       {row.title}
                     </Link>
                     <p className="text-muted">{row.company}</p>

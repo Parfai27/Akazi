@@ -166,7 +166,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
         const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
           .filter(Boolean)
           .join(" · ");
-        return [`${job.title} — ${job.company}`, where, deadlineLabel(job.deadlineAt), `${home}/jobs/${job.id}`].join("\n");
+        return [`${job.title} — ${job.company}`, where, deadlineLabel(job.deadlineAt), `${home}/jobs/${job.publicId}`].join("\n");
       })
       .join("\n\n"),
     "",
@@ -176,7 +176,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
 
   const cards = openings
     .map((job) => {
-      const href = `${home}/jobs/${job.id}`;
+      const href = `${home}/jobs/${job.publicId}`;
       const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
         .filter(Boolean)
         .join(" · ");

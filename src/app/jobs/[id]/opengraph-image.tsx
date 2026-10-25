@@ -38,7 +38,7 @@ async function logoData(src: string) {
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const job = await getJob(Number(id));
+  const job = await getJob(id);
   const company = job?.company ?? "Akazi";
   const logo = job ? companyLogo(job.company) : null;
   const src = logo ? await logoData(logo.src).catch(() => null) : null;

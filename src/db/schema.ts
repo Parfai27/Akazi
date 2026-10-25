@@ -12,6 +12,7 @@ export const jobs = sqliteTable(
   "jobs",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    publicId: text("public_id").notNull(),
     sourceId: text("source_id").notNull(),
     externalId: text("external_id").notNull(),
     title: text("title").notNull(),
