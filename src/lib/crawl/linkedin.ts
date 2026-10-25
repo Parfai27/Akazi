@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { htmlToText } from "../html-text";
 import { safeHttpUrl } from "../url";
 import { fetchText, sleep } from "./http";
 import type { RawJob } from "./types";
@@ -52,6 +53,21 @@ function companyWebsite(html: string): string | null {
   const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
   if (/(^|\.)linkedin\.com$|(^|\.)licdn\.com$|(^|\.)bing\.com$/.test(host)) return null;
   return url;
+}
+
+async function readDescription(id: string): Promise<string> {
+  const response = await fetch(`https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${id}`, {
+    headers: {
+      accept: "text/html",
+      "user-agent": "AkaziBot/1.0 (public career-page collector)",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(12000),
+  });
+  if (response.status === 429) throw new Error(`429 for ${id}`);
+  if (!response.ok) return "";
+  const markup = cheerio.load(await response.text())(".show-more-less-html__markup, .description__text").first().html();
+  return markup ? htmlToText(markup) : "";
 }
 
 async function readCompany(slug: string): Promise<string | null> {
@@ -118,13 +134,39 @@ export async function readLinkedIn(): Promise<RawJob[]> {
       title: job.title,
       company: job.company,
       location: job.location,
-      description: job.description,
+      description: "",
       applyUrl,
-      sourceUrl: applyUrl,
+      sourceUrl: `https://www.linkedin.com/jobs/view/${job.externalId}`,
       postedAt: job.postedAt,
       hint: job.hint,
     });
   }
   if (jobs.length === 0) throw new Error("LinkedIn jobs had no employer website");
-  return jobs;
+
+  let misses = 0;
+  for (const job of jobs) {
+    if (misses >= 5) break;
+    await sleep(300);
+    try {
+      job.description = await readDescription(job.externalId);
+      misses = job.description.trim().length >= 40 ? 0 : misses + 1;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (!message.startsWith("429") && !message.includes("Timeout")) {
+        misses += 1;
+        continue;
+      }
+      await sleep(5000);
+      try {
+        job.description = await readDescription(job.externalId);
+        misses = job.description.trim().length >= 40 ? 0 : misses + 1;
+      } catch {
+        misses += 1;
+      }
+    }
+  }
+
+  const described = jobs.filter((job) => job.description.trim().length >= 40);
+  if (described.length === 0) throw new Error("LinkedIn jobs had no description");
+  return described;
 }
