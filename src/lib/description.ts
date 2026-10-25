@@ -71,18 +71,19 @@ function unmatchedClose(line: string) {
 }
 
 function isHeading(line: string) {
-  if (line.length < 3 || line.length > 80) return false;
-  if (/[.!?]$/.test(line) || unmatchedClose(line)) return false;
-  if (/^https?:/i.test(line) || /@/.test(line) || isBullet(line)) return false;
-  if (/^[^:]{2,40}:\s+\S/.test(line)) return false;
-  const letters = line.replace(/[^A-Za-z]/g, "");
+  const value = withoutMarker(line);
+  if (value.length < 3 || value.length > 80) return false;
+  if (/[.!?]$/.test(value) || unmatchedClose(value)) return false;
+  if (/^https?:/i.test(value) || /@/.test(value) || value.includes(":") || value.includes(";") || isBullet(value)) return false;
+  if (looksLikeName(value)) return false;
+  const letters = value.replace(/[^A-Za-z]/g, "");
   if (letters.length < 3) return false;
   const upper = letters.replace(/[^A-Z]/g, "").length;
   if (upper / letters.length >= 0.85) return true;
-  const words = wordsOf(line);
+  const words = wordsOf(value);
   return (
     words.length <= 8 &&
-    !line.includes(",") &&
+    !value.includes(",") &&
     words.every((word) => /^[A-Z0-9]/.test(word) || /^(and|of|the|for|to|a|in|on|&)$/i.test(word))
   );
 }
@@ -98,8 +99,69 @@ function labelPattern(labels: string[]) {
 const SECTION_PATTERN = labelPattern(SECTION_LABELS);
 const FIELD_PATTERN = labelPattern(FIELD_LABELS);
 
+function withoutMarker(line: string) {
+  return line.replace(/^\s*(?:[IVXLC]{1,6}\.\s+|\d{1,2}\s*[\).]\s+)/i, "").trim();
+}
+
+/** A copied posting sometimes glues a label to its value, or adds a board's own prompt. */
+export function cleanPostingText(text: string) {
+  const labels = [...FIELD_LABELS].sort((left, right) => right.length - left.length);
+  let cleaned = stripAdSnippets(text).replace(/\r\n/g, "\n");
+  for (const label of labels) {
+    cleaned = cleaned.replace(new RegExp(`(^|\\n)(${label})(?=[A-Z])`, "gi"), "$1$2: ");
+  }
+  cleaned = cleaned.replace(/(^|\n)(?!https?:)([A-Za-z][A-Za-z .]{1,40}):(?=\S)/gi, "$1$2: ");
+  return cleaned
+    .split("\n")
+    .filter((line) => {
+      const value = line.trim();
+      if (!value) return true;
+      if (/^[-_]{3,}$/.test(value)) return false;
+      if (/^(?:please\s+)?click here(?:\s+to\s+(?:read more(?:\s+and apply)?|apply|view|download))?[.!]?\s*$/i.test(value)) return false;
+      if (/^read more(?:\s+and apply)?[.!]?\s*$/i.test(value)) return false;
+      if (/^apply (?:here|now)[.!]?\s*$/i.test(value)) return false;
+      if (/^minimum gpa:\s*mid\.?\s*$/i.test(value)) return false;
+      return true;
+    })
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** One board page can list several titled roles. Each published opening keeps its own part. */
+export function splitTitledRoles(text: string): { title: string; body: string }[] | null {
+  const pattern = /(?:^|\n)\s*((?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*[^\n]+)/gi;
+  const marks = [...text.matchAll(pattern)];
+  if (marks.length < 2) return null;
+  const roles = marks.map((mark, index) => {
+    const start = (mark.index ?? 0) + (matchStartsAfterBreak(mark[0]) ? 1 : 0);
+    const end = index + 1 < marks.length ? (marks[index + 1].index ?? text.length) : text.length;
+    const title = mark[1].replace(/^(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*/i, "").trim();
+    const body = text
+      .slice(start, end)
+      .replace(/^(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*[^\n]+\s*/i, "")
+      .trim();
+    return { title, body };
+  });
+  if (roles.some((role) => role.title.length < 3 || role.body.length < 40)) return null;
+  return roles;
+}
+
+function matchStartsAfterBreak(value: string) {
+  return value.startsWith("\n");
+}
+
+function looksLikeName(line: string) {
+  if (/[-&/]/.test(line)) return false;
+  const words = line.trim().split(/\s+/);
+  if (words.length < 2 || words.length > 4) return false;
+  const surname = words.filter((word) => word.length >= 4 && word === word.toUpperCase() && /^[A-Z]+$/.test(word));
+  const given = words.filter((word) => /^[A-Z][a-z.'’]+$/.test(word));
+  return surname.length === 1 && given.length >= 1 && surname.length + given.length === words.length;
+}
+
 function knownLabel(line: string): { kind: "heading" | "field"; label: string; rest: string } | null {
-  const stripped = line.replace(/^\d{1,2}\s*[\).]\s*/, "").trim();
+  const stripped = withoutMarker(line);
   const section = stripped.match(new RegExp(`^(${SECTION_PATTERN})\\s*([:;]?)\\s*(.*)$`, "i"));
   if (section && (!section[3].trim() || section[2] === ":" || section[2] === ";")) {
     return {
@@ -114,6 +176,10 @@ function knownLabel(line: string): { kind: "heading" | "field"; label: string; r
   }
   if (new RegExp(`^(${FIELD_PATTERN})$`, "i").test(stripped)) {
     return { kind: "field", label: titleCaseLabel(stripped), rest: "" };
+  }
+  const loose = stripped.match(new RegExp(`^(${FIELD_PATTERN})\\s+(\\S.{0,48})$`, "i"));
+  if (loose && !/[.!?]/.test(loose[2])) {
+    return { kind: "field", label: titleCaseLabel(loose[1]), rest: loose[2].trim() };
   }
   return null;
 }
@@ -265,7 +331,7 @@ function looksLikeDutyList(text: string) {
  * Sources only need to store the posting text.
  */
 export function descriptionBlocks(text: string): DescriptionBlock[] {
-  const lines = unwrapLines(normalizeBullets(stripAdSnippets(text)).replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
+  const lines = unwrapLines(normalizeBullets(cleanPostingText(text)).replace(/;\s+(?=\d+[\).]\s)/g, ";\n"));
   const blocks: DescriptionBlock[] = [];
 
   const pushParagraph = (value: string) => {
@@ -274,6 +340,8 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
   };
 
   let paragraph: string[] = [];
+  let afterName = false;
+  let closing = false;
   const flush = () => {
     if (paragraph.length) pushParagraph(paragraph.join("\n"));
     paragraph = [];
@@ -285,6 +353,17 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
       flush();
       continue;
     }
+    if (/^done (?:at|in)\b/i.test(line)) closing = true;
+    if (closing && !knownLabel(line)) {
+      paragraph.push(line);
+      continue;
+    }
+    if (afterName && !knownLabel(line) && wordsOf(line).length <= 6 && !/[.!?]$/.test(line)) {
+      paragraph.push(line);
+      afterName = false;
+      continue;
+    }
+    afterName = looksLikeName(line) || (/;/.test(line) && line.length <= 40 && !/[.!?]$/.test(line));
     const known = knownLabel(line);
     if (known?.kind === "field") {
       flush();
@@ -305,7 +384,7 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
     }
     if (isHeading(line)) {
       flush();
-      blocks.push({ kind: "heading", text: readableHeading(line.replace(/^\d{1,2}\s*[\).]\s*/, "")) });
+      blocks.push({ kind: "heading", text: readableHeading(withoutMarker(line)) });
       continue;
     }
     paragraph.push(line);

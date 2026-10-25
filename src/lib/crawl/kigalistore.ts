@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { cleanPostingText, splitTitledRoles } from "../description";
 import { htmlToText } from "../html-text";
 import { safeHttpUrl } from "../url";
 import { fetchText, isoDate, sleep } from "./http";
@@ -115,36 +116,30 @@ function employerLinks(html: string, pageUrl: string): string[] {
   return found;
 }
 
-function roleTitles(description: string): string[] {
-  return [...description.matchAll(/(?:^|\n)\s*(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*([^\n]+)/gi)]
-    .map((match) => match[1].replace(/\s+/g, " ").trim())
-    .filter((title) => title.length > 2);
-}
-
 function postingFrom(html: string, pageUrl: string): RawJob[] {
   const job = blocks(html).find((block) => block["@type"] === "JobPosting");
   if (!job) return [];
   const title = typeof job.title === "string" ? decode(job.title).replace(/\s+/g, " ") : "";
   const links = employerLinks(html, pageUrl);
   if (!title || links.length === 0) return [];
-  const description = typeof job.description === "string" ? decode(htmlToText(job.description)) : "";
-  const titles = roleTitles(description);
+  const description = typeof job.description === "string" ? cleanPostingText(decode(htmlToText(job.description))) : "";
+  const roles = splitTitledRoles(description);
   const shared = {
     company: decode(companyOf(job)).replace(/\s+/g, " "),
     location: locationOf(job),
-    description,
     postedAt: isoDate(job.datePosted),
     deadlineAt: isoDate(job.validThrough),
   };
-  if (links.length < 2 || titles.length !== links.length) {
-    return [{ ...shared, externalId: pageUrl, title, applyUrl: links[0], sourceUrl: links[0] }];
+  if (!roles || roles.length !== links.length) {
+    return [{ ...shared, externalId: pageUrl, title, description, applyUrl: links[0], sourceUrl: links[0] }];
   }
-  return links.map((applyUrl, index) => ({
+  return roles.map((role, index) => ({
     ...shared,
-    externalId: applyUrl,
-    title: titles[index],
-    applyUrl,
-    sourceUrl: applyUrl,
+    externalId: links[index],
+    title: role.title,
+    description: role.body,
+    applyUrl: links[index],
+    sourceUrl: links[index],
   }));
 }
 
