@@ -139,6 +139,7 @@ export function splitTitledRoles(text: string): { title: string; body: string }[
     const title = mark[1].replace(/^(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*/i, "").trim();
     const body = text
       .slice(start, end)
+      .trim()
       .replace(/^(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*[^\n]+\s*/i, "")
       .trim();
     return { title, body };
@@ -353,6 +354,7 @@ export function descriptionBlocks(text: string): DescriptionBlock[] {
       flush();
       continue;
     }
+    if (/^(?:[IVXLC]+\.\s*)?(?:job\s+)?title\s*:/i.test(line)) continue;
     if (/^done (?:at|in)\b/i.test(line)) closing = true;
     if (closing && !knownLabel(line)) {
       paragraph.push(line);
