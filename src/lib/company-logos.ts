@@ -32,6 +32,7 @@ const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
   LemFi: { src: "https://www.lemfi.com/favicon.ico", cover: true },
   Zapier: { src: "https://zapier.com/favicon.ico", cover: true },
   micro1: { src: "/logos/micro1logo.png", bg: "#000000" },
+  "BPR Bank Rwanda PLC": { src: "/logos/bpr.jpg" },
   "ISHEMA HUB Limited": { src: "/logos/ishema.png", cover: true },
   "Africa Improved Foods Rwanda": { src: "/logos/africa-improved-foods.png" },
   "Trinity Musha Mines Ltd": { src: "/logos/trinity-metals.png" },
