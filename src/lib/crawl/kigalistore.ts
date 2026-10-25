@@ -4,7 +4,7 @@ import { safeHttpUrl } from "../url";
 import { fetchText, isoDate, sleep } from "./http";
 import type { RawJob } from "./types";
 
-const LIST = "https://kigalistore.com/jobs-in-rwanda";
+const LISTS = ["https://kigalistore.com/jobs-in-rwanda", "https://kigalistore.com/internship-in-rwanda"];
 
 type JsonLd = Record<string, unknown>;
 
@@ -24,15 +24,15 @@ function blocks(html: string): JsonLd[] {
   return found;
 }
 
-function jobLinks(html: string): string[] {
+function jobLinks(html: string, base: string): string[] {
   const found = new Set<string>();
   for (const block of blocks(html)) {
     const items = block.itemListElement;
     if (!Array.isArray(items)) continue;
     for (const item of items) {
       if (!item || typeof item !== "object") continue;
-      const url = safeHttpUrl(typeof (item as JsonLd).url === "string" ? ((item as JsonLd).url as string) : "");
-      if (url?.includes("/jobs/")) found.add(url);
+      const url = safeHttpUrl(typeof (item as JsonLd).url === "string" ? ((item as JsonLd).url as string) : "", base);
+      if (url && /\/(?:jobs|internship)\//.test(new URL(url).pathname)) found.add(url);
     }
   }
   return [...found];
@@ -45,6 +45,9 @@ function decode(value: string): string {
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&nbsp;/g, " ")
+    .replace(/&rsquo;|&lsquo;/g, "'")
+    .replace(/&rdquo;|&ldquo;/g, '"')
+    .replace(/&ndash;|&mdash;/g, "-")
     .trim();
 }
 
@@ -99,62 +102,78 @@ function externalSite(value: string | undefined, base: string): string | null {
   return url;
 }
 
-function employerApply(html: string, pageUrl: string): string | null {
+function employerLinks(html: string, pageUrl: string): string[] {
   const $ = cheerio.load(html);
-  const button = $(".detail-apply-card a[href]").first().attr("href");
-  const direct = externalSite(button, pageUrl);
-  if (direct) return direct;
-  const links = $(".detail-content-card a[href]")
-    .map((_, element) => $(element).attr("href") ?? "")
-    .get();
-  for (const href of links) {
+  const found: string[] = [];
+  const add = (href: string | undefined) => {
     const url = externalSite(href, pageUrl);
-    if (url) return url;
-  }
-  return null;
+    if (url && !found.includes(url)) found.push(url);
+  };
+  $(".detail-apply-card a[href]").each((_, element) => add($(element).attr("href")));
+  if (found.length > 0) return found;
+  $(".detail-content-card a[href]").each((_, element) => add($(element).attr("href")));
+  return found;
 }
-function postingFrom(html: string, pageUrl: string): RawJob | null {
+
+function roleTitles(description: string): string[] {
+  return [...description.matchAll(/(?:^|\n)\s*(?:[IVXLC]+\.\s*)?(?:Job\s+)?Title\s*:\s*([^\n]+)/gi)]
+    .map((match) => match[1].replace(/\s+/g, " ").trim())
+    .filter((title) => title.length > 2);
+}
+
+function postingFrom(html: string, pageUrl: string): RawJob[] {
   const job = blocks(html).find((block) => block["@type"] === "JobPosting");
-  if (!job) return null;
+  if (!job) return [];
   const title = typeof job.title === "string" ? decode(job.title).replace(/\s+/g, " ") : "";
-  const applyUrl = employerApply(html, pageUrl);
-  if (!title || !applyUrl) return null;
+  const links = employerLinks(html, pageUrl);
+  if (!title || links.length === 0) return [];
   const description = typeof job.description === "string" ? decode(htmlToText(job.description)) : "";
-  return {
-    externalId: pageUrl,
-    title,
+  const titles = roleTitles(description);
+  const shared = {
     company: decode(companyOf(job)).replace(/\s+/g, " "),
     location: locationOf(job),
     description,
-    applyUrl,
-    sourceUrl: applyUrl,
     postedAt: isoDate(job.datePosted),
     deadlineAt: isoDate(job.validThrough),
   };
+  if (links.length < 2 || titles.length !== links.length) {
+    return [{ ...shared, externalId: pageUrl, title, applyUrl: links[0], sourceUrl: links[0] }];
+  }
+  return links.map((applyUrl, index) => ({
+    ...shared,
+    externalId: applyUrl,
+    title: titles[index],
+    applyUrl,
+    sourceUrl: applyUrl,
+  }));
 }
 
 export async function readKigaliStore(): Promise<RawJob[]> {
   const jobs: RawJob[] = [];
   const seen = new Set<string>();
   let failures = 0;
-  for (let page = 1; page <= 8; page += 1) {
-    const listUrl = page === 1 ? LIST : `${LIST}?page=${page}`;
-    const html = await fetchText(listUrl, "text/html");
-    const links = jobLinks(html).filter((link) => !seen.has(link));
-    if (links.length === 0) break;
-    for (const link of links) {
-      seen.add(link);
-      await sleep(80);
-      try {
-        const detail = await fetchText(link, "text/html");
-        const job = postingFrom(detail, link);
-        if (job) jobs.push(job);
-      } catch (error) {
-        failures += 1;
-        if (failures > 5) throw error;
+  for (const list of LISTS) {
+    for (let page = 1; page <= 8; page += 1) {
+      const listUrl = page === 1 ? list : `${list}?page=${page}`;
+      const html = await fetchText(listUrl, "text/html");
+      const links = jobLinks(html, listUrl).filter((link) => !seen.has(link));
+      if (links.length === 0) break;
+      for (const link of links) {
+        seen.add(link);
+        await sleep(80);
+        try {
+          const detail = await fetchText(link, "text/html");
+          for (const job of postingFrom(detail, link)) {
+            if (jobs.some((existing) => existing.externalId === job.externalId)) continue;
+            jobs.push(job);
+          }
+        } catch (error) {
+          failures += 1;
+          if (failures > 5) throw error;
+        }
       }
+      await sleep(150);
     }
-    await sleep(150);
   }
   if (jobs.length === 0) throw new Error("KigaliStore returned no jobs");
   return jobs;
