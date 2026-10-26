@@ -82,20 +82,27 @@ export function deadlineOpen(iso: string | null, today = startOfToday()): boolea
   return deadlineKind(iso, today) !== "passed";
 }
 
-export function compareOpenings<T extends Dated>(a: T, b: T, today = startOfToday()) {
+/** A role posted within this window is New. */
+export const NEW_WINDOW_MS = 7 * 86_400_000;
+
+export function postedRecently(job: { postedAt: string | null }, now = Date.now()) {
+  const posted = time(job.postedAt);
+  if (Number.isNaN(posted)) return false;
+  const age = now - posted;
+  return age >= -86_400_000 && age <= NEW_WINDOW_MS;
+}
+
+/** Newest posting first. A role with no post date follows dated ones. */
+export function compareOpenings<T extends Dated>(a: T, b: T) {
   const rank = (job: Dated) => {
-    const end = time(job.deadlineAt);
     const posted = time(job.postedAt);
-    const seen = time(job.firstSeenAt);
-    const postedRank = Number.isNaN(posted) ? seen : posted;
-    if (!Number.isNaN(end) && end >= today) return [0, end, -postedRank] as const;
-    if (Number.isNaN(end)) return [1, 0, -postedRank] as const;
-    return [2, -end, -postedRank] as const;
+    return Number.isNaN(posted) ? Number.NEGATIVE_INFINITY : posted;
   };
-  const left = rank(a);
-  const right = rank(b);
-  for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) return left[index] - right[index];
-  }
-  return 0;
+  const posted = rank(b) - rank(a);
+  if (posted !== 0) return posted;
+  const endA = time(a.deadlineAt);
+  const endB = time(b.deadlineAt);
+  const left = Number.isNaN(endA) ? Number.POSITIVE_INFINITY : endA;
+  const right = Number.isNaN(endB) ? Number.POSITIVE_INFINITY : endB;
+  return left - right;
 }

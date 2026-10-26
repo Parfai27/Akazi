@@ -18,6 +18,7 @@ function filtersFrom(search: Search): JobFilters {
     shelf: one(search.shelf),
     fn: one(search.fn),
     company: one(search.company),
+    fresh: one(search.new) === "1",
   };
 }
 
@@ -28,6 +29,7 @@ function boardHref(filters: JobFilters, patch: Partial<JobFilters> = {}) {
   if (next.shelf) params.set("shelf", next.shelf);
   if (next.fn) params.set("fn", next.fn);
   if (next.company) params.set("company", next.company);
+  if (next.fresh) params.set("new", "1");
   const query = params.toString();
   return query ? `/?${query}` : "/";
 }
@@ -44,9 +46,9 @@ export default function Home(props: { searchParams: Promise<Search> }) {
 
 async function Board({ searchParams }: { searchParams: Promise<Search> }) {
   const filters = filtersFrom(await searchParams);
-  const { openings, closingSoon, shelfCounts, functionCounts } = await getBoard(filters);
+  const { openings, closingSoon, freshCount, shelfCounts, functionCounts } = await getBoard(filters);
   const ads = adConfig();
-  const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company);
+  const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company || filters.fresh);
   const showClosing = !filtering && closingSoon.length > 0;
   const closingIds = new Set(showClosing ? closingSoon.map((job) => job.id) : []);
   const rest = showClosing ? openings.filter((job) => !closingIds.has(job.id)) : openings;
@@ -87,6 +89,14 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-x-4 gap-y-3 pt-2">
+          <FilterChip
+            href={boardHref(filters, { fresh: !filters.fresh })}
+            active={Boolean(filters.fresh)}
+            count={freshCount}
+            title="Posted in the last 7 days"
+          >
+            New
+          </FilterChip>
           <FilterChip href={boardHref(filters, { fn: "" })} active={!filters.fn}>
             All work
           </FilterChip>
@@ -162,16 +172,19 @@ function FilterChip({
   href,
   active,
   count,
+  title,
   children,
 }: {
   href: string;
   active: boolean;
   count?: number;
+  title?: string;
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
+      title={title}
       className={`relative inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium ${
         active ? "bg-forest text-card" : "border border-line bg-card text-ink hover:border-forest hover:text-forest"
       }`}

@@ -9,6 +9,7 @@ import {
   deadlineKind,
   deadlineOpen,
   jobFunction,
+  postedRecently,
   shelfOf,
   type JobFunction,
   type Shelf,
@@ -20,6 +21,7 @@ export type JobFilters = {
   shelf?: string;
   fn?: string;
   company?: string;
+  fresh?: boolean;
 };
 
 const SHELF_IDS = new Set<Shelf>(SHELVES.map((item) => item.id));
@@ -37,12 +39,18 @@ export async function getBoard(filters: JobFilters) {
   const shelf = filters.shelf && SHELF_IDS.has(filters.shelf as Shelf) ? (filters.shelf as Shelf) : "";
   const fn = filters.fn && FUNCTION_IDS.has(filters.fn as JobFunction) ? (filters.fn as JobFunction) : "";
   const company = filters.company?.trim() ?? "";
+  const fresh = Boolean(filters.fresh);
+  const matchesNarrow = (job: JobRecord, options: { fn?: boolean; fresh?: boolean }) => {
+    if (company && job.company !== company) return false;
+    if (options.fn && fn && jobFunction(job.title) !== fn) return false;
+    if (options.fresh && fresh && !postedRecently(job)) return false;
+    return true;
+  };
 
   const searched = active.filter((job) => matchesQuery(job, q));
   const shelfCounts = { kigali: 0, country: 0, remote: 0 };
   for (const job of searched) {
-    if (company && job.company !== company) continue;
-    if (fn && jobFunction(job.title) !== fn) continue;
+    if (!matchesNarrow(job, { fn: true, fresh: true })) continue;
     shelfCounts[shelfOf(job)] += 1;
   }
 
@@ -52,27 +60,36 @@ export async function getBoard(filters: JobFilters) {
     number
   >;
   for (const job of inShelf) {
-    if (company && job.company !== company) continue;
+    if (!matchesNarrow(job, { fresh: true })) continue;
     functionCounts[jobFunction(job.title)] += 1;
   }
 
   const companyCounts = new Map<string, number>();
+  let freshCount = 0;
   for (const job of inShelf) {
+    if (company && job.company !== company) continue;
     if (fn && jobFunction(job.title) !== fn) continue;
+    if (postedRecently(job)) freshCount += 1;
+    if (fresh && !postedRecently(job)) continue;
     companyCounts.set(job.company, (companyCounts.get(job.company) ?? 0) + 1);
   }
 
   const openings = inShelf
-    .filter((job) => (!company || job.company === company) && (!fn || jobFunction(job.title) === fn))
+    .filter((job) => matchesNarrow(job, { fn: true, fresh: true }))
     .sort(compareOpenings);
-  const closingSoon = openings.filter((job) => {
-    const kind = deadlineKind(job.deadlineAt);
-    return kind === "soon" || kind === "later";
-  });
+  const closingSoon = openings
+    .filter((job) => {
+      const kind = deadlineKind(job.deadlineAt);
+      return kind === "soon" || kind === "later";
+    })
+    .sort((a, b) => new Date(a.deadlineAt ?? 0).getTime() - new Date(b.deadlineAt ?? 0).getTime())
+    .slice(0, 5)
+    .sort(compareOpenings);
 
   return {
     openings,
-    closingSoon: closingSoon.slice(0, 5),
+    closingSoon,
+    freshCount,
     shelfCounts,
     functionCounts,
     companies: [...companyCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
