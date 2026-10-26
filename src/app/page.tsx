@@ -89,21 +89,21 @@ async function Board({ searchParams }: { searchParams: Promise<Search> }) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-x-4 gap-y-3 pt-2">
+          <FilterChip href={boardHref(filters, { fn: "", fresh: false })} active={!filters.fn && !filters.fresh}>
+            All work
+          </FilterChip>
           <FilterChip
-            href={boardHref(filters, { fresh: !filters.fresh })}
+            href={boardHref(filters, { fresh: !filters.fresh, fn: "" })}
             active={Boolean(filters.fresh)}
             count={freshCount}
             title="Posted in the last 7 days"
           >
             New
           </FilterChip>
-          <FilterChip href={boardHref(filters, { fn: "" })} active={!filters.fn}>
-            All work
-          </FilterChip>
           {JOB_FUNCTIONS.filter((item) => functionCounts[item.id] > 0).map((item) => (
             <FilterChip
               key={item.id}
-              href={boardHref(filters, { fn: filters.fn === item.id ? "" : item.id })}
+              href={boardHref(filters, { fn: filters.fn === item.id ? "" : item.id, fresh: false })}
               active={filters.fn === item.id}
               count={functionCounts[item.id]}
             >

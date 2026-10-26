@@ -59,18 +59,16 @@ export async function getBoard(filters: JobFilters) {
     JobFunction,
     number
   >;
-  for (const job of inShelf) {
-    if (!matchesNarrow(job, { fresh: true })) continue;
-    functionCounts[jobFunction(job.title)] += 1;
-  }
-
-  const companyCounts = new Map<string, number>();
   let freshCount = 0;
   for (const job of inShelf) {
     if (company && job.company !== company) continue;
-    if (fn && jobFunction(job.title) !== fn) continue;
+    functionCounts[jobFunction(job.title)] += 1;
     if (postedRecently(job)) freshCount += 1;
-    if (fresh && !postedRecently(job)) continue;
+  }
+
+  const companyCounts = new Map<string, number>();
+  for (const job of inShelf) {
+    if (!matchesNarrow(job, { fn: true, fresh: true })) continue;
     companyCounts.set(job.company, (companyCounts.get(job.company) ?? 0) + 1);
   }
 

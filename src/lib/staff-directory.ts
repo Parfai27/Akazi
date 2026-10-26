@@ -1,4 +1,5 @@
 import { io } from "next/cache";
+import { connection } from "next/server";
 import { sqlite } from "@/db";
 import { functionLabel, jobFunction } from "@/lib/organize";
 import { jobViewerCount, loadKeptMail, restoreStudyRecords, type KeptMail } from "@/lib/record-log";
@@ -106,6 +107,7 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
 }
 
 export async function getAlertRows(): Promise<AlertRow[]> {
+  await connection();
   await io();
   await restoreStudyRecords();
   const rows = sqlite()

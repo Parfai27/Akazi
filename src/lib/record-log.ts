@@ -228,6 +228,7 @@ function applyBundle(bundle: KeptBundle) {
 
   const write = db.transaction(() => {
     for (const person of bundle.subscribers) {
+      if (!person.email || !person.createdAt) continue;
       upsertPerson.run(
         cleanText(person.name || "", 80),
         person.email,

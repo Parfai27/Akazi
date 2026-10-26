@@ -1,4 +1,5 @@
 import { io } from "next/cache";
+import { connection } from "next/server";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
 import { countRoleViewers, rememberJobViewer, restoreStudyRecords } from "@/lib/record-log";
@@ -108,6 +109,7 @@ export async function recordVisit(visitor: string, path: string): Promise<number
 }
 
 export async function getStaffStats(): Promise<StaffStats> {
+  await connection();
   await io();
   await restoreStudyRecords();
   const today = kigaliDay();

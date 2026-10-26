@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { extractText } from "unpdf";
 import { db } from "@/db";
@@ -77,6 +78,8 @@ export async function subscribe(_prev: AlertState, formData: FormData): Promise<
 
   const stored = db.select().from(subscribers).where(eq(subscribers.id, subscriberId!)).get();
   if (stored) await rememberSubscriber(stored);
+  revalidatePath("/admin");
+  revalidatePath("/admin/alerts");
   const result = await matchSubscriber(subscriberId!);
   return {
     ok: true,

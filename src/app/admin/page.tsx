@@ -107,7 +107,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
         <Stat label="People" value={stats.all.people} note="Everyone counted so far" />
         <Stat label="People this week" value={stats.week.people} note={pairNote(stats.week, "this week")} />
         <Stat label="Visits this month" value={stats.month.visits} note={pairNote(stats.month, "this month")} />
-        <Stat label="Alert signups" value={stats.signupsThisMonth} note={`${stats.signupsTotal} in total · this month shown`} />
+        <Stat label="Alert signups" value={stats.signupsTotal} note={`${stats.signupsThisMonth} this month`} />
         <Stat label="Open roles" value={activeCount} note={`${newCount} not reviewed yet`} />
         <Stat label="People today" value={stats.today.people} note={pairNote(stats.today, "today")} />
         <Stat label="Visits this week" value={stats.week.visits} note="Pages opened since Monday" />
