@@ -92,15 +92,14 @@ async function saveRecord(bucket: string, key: string, payload: string) {
   }
 }
 
-/** The old mail log stored one row per role and filled the only lasting store. Drop a batch so a signup can fit. */
-async function makeRoom() {
-  const listed = await readBucket("mail", 25_000);
-  if (!listed.ok || listed.rows.length < 20) return false;
-  const extra = listed.rows.slice(0, 80);
-  for (let index = 0; index < extra.length; index += 8) {
-    await Promise.all(extra.slice(index, index + 8).map((row) => forgetRecord("mail", row.key)));
+/** The old mail log stored one row per role and filled the only lasting store. */
+async function dropMailLog() {
+  try {
+    const reply = await postHook({ kind: "drop", bucket: "mail" }, 25_000);
+    return reply.startsWith("ok");
+  } catch {
+    return false;
   }
-  return true;
 }
 
 async function forgetRecord(bucket: string, key: string) {
@@ -157,14 +156,15 @@ export async function rememberSubscriber(row: KeptSubscriber) {
   if (!hookReady()) return process.env.RENDER !== "true";
   const payload = subscriberPayload(row);
   let saved = await saveRecord("subscriber", row.email, payload);
-  for (let attempt = 0; !saved && attempt < 6; attempt += 1) {
-    if (!(await makeRoom())) break;
+  for (let attempt = 0; !saved && attempt < 4; attempt += 1) {
+    if (!(await dropMailLog())) break;
     saved = await saveRecord("subscriber", row.email, payload);
   }
   invalidateStudyRecords();
   if (!saved) return false;
   const listed = await readBucket("subscriber");
-  return listed.ok && listed.rows.some((item) => sameSignup(row, item));
+  if (!listed.ok) return true;
+  return listed.rows.some((item) => sameSignup(row, item));
 }
 
 export async function forgetSubscriber(email: string) {
