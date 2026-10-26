@@ -147,17 +147,43 @@ export async function getSourceRows(): Promise<SourceRow[]> {
     .sort((a, b) => b.openCount - a.openCount || a.name.localeCompare(b.name));
 }
 
+function mailDetail(detail: string) {
+  if (!detail || detail === "error") return "The mail service could not send this note.";
+  return detail;
+}
+
+function presentMail(rows: MailRow[]): { summary: MailSummary; rows: MailRow[] } {
+  const groups = new Map<string, MailRow & { count: number }>();
+  for (const row of rows) {
+    const key = `${row.email}|${row.status}|${(row.createdAt || "").slice(0, 16)}`;
+    const found = groups.get(key);
+    if (found) found.count += 1;
+    else groups.set(key, { ...row, count: 1, detail: mailDetail(row.detail) });
+  }
+  const grouped = [...groups.values()].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const summary = { sent: 0, queued: 0, failed: 0 };
+  for (const row of grouped) {
+    if (row.status === "sent" || row.status === "queued" || row.status === "failed") summary[row.status] += 1;
+  }
+  return {
+    summary,
+    rows: grouped.slice(0, 40).map((row, index) => ({
+      id: index + 1,
+      name: row.name,
+      email: row.email,
+      title: row.count === 1 ? row.title : `${row.count} roles, including ${row.title}`,
+      status: row.status,
+      detail: row.detail,
+      createdAt: row.createdAt,
+    })),
+  };
+}
+
 function mailFromKept(kept: KeptMail[]) {
   const people = sqlite().prepare("SELECT name, email FROM subscribers").all() as { name: string; email: string }[];
   const byEmail = new Map(people.map((person) => [person.email, person.name]));
-  const summary = { sent: 0, queued: 0, failed: 0 };
-  for (const item of kept) {
-    if (item.status === "sent" || item.status === "queued" || item.status === "failed") summary[item.status] += 1;
-  }
-  const rows = [...kept]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 40)
-    .map((item, index) => ({
+  return presentMail(
+    kept.map((item, index) => ({
       id: index + 1,
       name: byEmail.get(item.email) || item.email,
       email: item.email,
@@ -165,37 +191,27 @@ function mailFromKept(kept: KeptMail[]) {
       status: item.status,
       detail: item.detail,
       createdAt: item.createdAt,
-    }));
-  return { summary, rows };
+    })),
+  );
 }
 
 export async function getMailLog(): Promise<{ summary: MailSummary; rows: MailRow[] }> {
+  await connection();
   await io();
   await restoreStudyRecords();
   const kept = await loadKeptMail();
   if (kept) return mailFromKept(kept);
-  const counts = sqlite()
-    .prepare("SELECT status, COUNT(*) AS total FROM notifications GROUP BY status")
-    .all() as { status: string; total: number }[];
-  const summary = { sent: 0, queued: 0, failed: 0 };
-  for (const row of counts) {
-    if (row.status === "sent" || row.status === "queued" || row.status === "failed") {
-      summary[row.status] = Number(row.total);
-    }
-  }
   const rows = sqlite()
     .prepare(
       `SELECT n.id, n.status, n.detail, n.created_at AS createdAt, s.name, s.email, j.title
        FROM notifications n
        JOIN subscribers s ON s.id = n.subscriber_id
        LEFT JOIN jobs j ON j.id = n.job_id
-       ORDER BY n.created_at DESC
-       LIMIT 40`,
+       ORDER BY n.created_at DESC`,
     )
     .all() as { id: number; status: string; detail: string | null; createdAt: string; name: string; email: string; title: string | null }[];
-  return {
-    summary,
-    rows: rows.map((row) => ({
+  return presentMail(
+    rows.map((row) => ({
       id: row.id,
       name: row.name,
       email: row.email,
@@ -204,7 +220,7 @@ export async function getMailLog(): Promise<{ summary: MailSummary; rows: MailRo
       detail: row.detail ?? "",
       createdAt: row.createdAt,
     })),
-  };
+  );
 }
 
 export async function getRecentOpens(): Promise<RecentOpen[]> {

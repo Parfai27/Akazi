@@ -20,7 +20,7 @@ export default async function MailPage() {
       <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Mail</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
         {ready
-          ? "Email is ready. Matches are sent when someone signs up and when a new opening is collected."
+          ? "Email is ready. One note can cover several roles. Matches go out when someone signs up and when a new opening is collected."
           : "Email is not set up. Matches are saved here as queued until SMTP is added in the host settings."}
       </p>
       <section className="mt-6 grid gap-3 sm:grid-cols-3">

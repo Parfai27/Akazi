@@ -122,7 +122,9 @@ function alertIntro(count: number) {
     : `These ${count} openings on Akazi match what you studied or your CV.`;
 }
 
-function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecord[]) {
+const EMAIL_ROLE_LIMIT = 12;
+
+function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecord[], more = 0) {
   const home = siteUrl();
   const intro = alertIntro(openings.length);
   const stop = "You asked Akazi to send these notes. Reply to this email if you want them to stop.";
@@ -144,9 +146,11 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
     "",
     stop,
     "",
+    more > 0 ? `${more} more matching roles are on Akazi.` : "",
+    more > 0 ? home : "",
     "Akazi",
     home,
-  ].join("\n");
+  ].filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n");
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -159,6 +163,7 @@ function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecor
           `<p style="margin:0 0 16px;">${escapeHtml(role.line)}<br /><a href="${role.href}" style="color:#1e6b58;">${escapeHtml(role.href)}</a></p>`,
       )
       .join("")}
+    ${more > 0 ? `<p style="margin:0 0 16px;">${more} more matching roles are on Akazi.</p>` : ""}
     <p style="margin:0 0 16px;">${escapeHtml(stop)}</p>
     <p style="margin:0;">Akazi<br /><a href="${home}" style="color:#1e6b58;">${escapeHtml(home)}</a></p>
   </body>
@@ -171,24 +176,22 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
   if (openings.length === 0) return { matched: 0, sent: 0, queued: 0 };
   const now = new Date().toISOString();
   const ready = mailConfigured();
+  const listed = openings.slice(0, EMAIL_ROLE_LIMIT);
+  const more = openings.length - listed.length;
   let sent = 0;
   let queued = 0;
 
   if (ready) {
     try {
-      const message = alertMessage(person, openings);
-      await deliver(
-        person.email,
-        subjectLine(openings),
-        message.text,
-        message.html,
-      );
+      const message = alertMessage(person, listed, more);
+      await deliver(person.email, subjectLine(listed), message.text, message.html);
       sent = openings.length;
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
+      const reason = detail === "error" ? "The mail service could not send this note." : detail;
       for (const job of openings) {
-        remember(person.id, job.id, "failed", detail.slice(0, 300), now);
-        await rememberKept(person, job, "failed", detail.slice(0, 300), now);
+        remember(person.id, job.id, "failed", reason.slice(0, 300), now);
+        await rememberKept(person, job, "failed", reason.slice(0, 300), now);
       }
       return { matched: openings.length, sent: 0, queued: 0 };
     }
@@ -283,14 +286,12 @@ export async function flushQueuedAlerts() {
       .where(inArray(jobs.id, jobIds))
       .all()
       .filter((job) => job.isActive && deadlineOpen(job.deadlineAt));
+    if (openings.length === 0) continue;
+    const listed = openings.slice(0, EMAIL_ROLE_LIMIT);
+    const more = openings.length - listed.length;
     try {
-      const message = alertMessage(person, openings);
-      await deliver(
-        person.email,
-        subjectLine(openings),
-        message.text,
-        message.html,
-      );
+      const message = alertMessage(person, listed, more);
+      await deliver(person.email, subjectLine(listed), message.text, message.html);
       db.update(notifications)
         .set({ status: "sent", detail: null })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
@@ -298,11 +299,12 @@ export async function flushQueuedAlerts() {
       for (const job of openings) await rememberKept(person, job, "sent", null, new Date().toISOString());
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
+      const reason = detail === "error" ? "The mail service could not send this note." : detail;
       db.update(notifications)
-        .set({ status: "failed", detail: detail.slice(0, 300) })
+        .set({ status: "failed", detail: reason.slice(0, 300) })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
         .run();
-      for (const job of openings) await rememberKept(person, job, "failed", detail.slice(0, 300), new Date().toISOString());
+      for (const job of openings) await rememberKept(person, job, "failed", reason.slice(0, 300), new Date().toISOString());
     }
   }
 }
