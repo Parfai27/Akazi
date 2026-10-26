@@ -4,7 +4,7 @@ import { db } from "../db";
 import { jobs, notifications, subscribers, type JobRecord, type SubscriberRecord } from "../db/schema";
 import { matchesProfile } from "./match";
 import { deadlineOpen } from "./organize";
-import { rememberMail } from "./record-log";
+import { rememberMail, rememberSubscriber } from "./record-log";
 import { deadlineLabel } from "./url";
 
 export type AlertResult = {
@@ -190,22 +190,34 @@ async function recordAndSend(person: SubscriberRecord, openings: JobRecord[]): P
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       const reason = detail === "error" ? "The mail service could not send this note." : detail;
-      for (const job of openings) {
-        remember(person.id, job.id, "failed", reason.slice(0, 300), now);
-        await rememberKept(person, job, "failed", reason.slice(0, 300), now);
-      }
+      for (const job of openings) remember(person.id, job.id, "failed", reason.slice(0, 300), now);
+      const sample = listed[0] ?? openings[0];
+      if (sample) await rememberKept(person, sample, "failed", reason.slice(0, 300), now);
       return { matched: openings.length, sent: 0, queued: 0 };
     }
   } else {
     queued = openings.length;
   }
 
-  for (const job of openings) {
-    const status = ready ? "sent" : "queued";
-    remember(person.id, job.id, status, null, now);
-    await rememberKept(person, job, status, null, now);
-  }
+  const status = ready ? "sent" : "queued";
+  for (const job of openings) remember(person.id, job.id, status, null, now);
+  const sample = listed[0] ?? openings[0];
+  if (sample) await rememberKept(person, sample, status, openings.length > 1 ? `${openings.length} roles in this note` : "", now);
+  if (status === "sent") await rememberAlerted(person);
   return { matched: openings.length, sent, queued };
+}
+
+async function rememberAlerted(person: SubscriberRecord) {
+  const rows = db
+    .select({ sourceId: jobs.sourceId, externalId: jobs.externalId })
+    .from(notifications)
+    .innerJoin(jobs, eq(jobs.id, notifications.jobId))
+    .where(and(eq(notifications.subscriberId, person.id), eq(notifications.status, "sent")))
+    .all();
+  await rememberSubscriber({
+    ...person,
+    sent: rows.map((row) => `${row.sourceId}\t${row.externalId}`),
+  });
 }
 
 function unseenMatches(person: SubscriberRecord, candidates: JobRecord[]) {
@@ -297,7 +309,9 @@ export async function flushQueuedAlerts() {
         .set({ status: "sent", detail: null })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
         .run();
-      for (const job of openings) await rememberKept(person, job, "sent", null, new Date().toISOString());
+      const sample = listed[0] ?? openings[0];
+      if (sample) await rememberKept(person, sample, "sent", openings.length > 1 ? `${openings.length} roles in this note` : "", new Date().toISOString());
+      await rememberAlerted(person);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       const reason = detail === "error" ? "The mail service could not send this note." : detail;
@@ -305,7 +319,8 @@ export async function flushQueuedAlerts() {
         .set({ status: "failed", detail: reason.slice(0, 300) })
         .where(and(eq(notifications.subscriberId, subscriberId), eq(notifications.status, "queued")))
         .run();
-      for (const job of openings) await rememberKept(person, job, "failed", reason.slice(0, 300), new Date().toISOString());
+      const sample = listed[0] ?? openings[0];
+      if (sample) await rememberKept(person, sample, "failed", reason.slice(0, 300), new Date().toISOString());
     }
   }
 }

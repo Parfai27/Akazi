@@ -8,6 +8,8 @@ export type KeptSubscriber = {
   consentAt: string;
   createdAt: string;
   updatedAt: string;
+  /** Jobs already emailed, as `sourceId` + tab + `externalId`. */
+  sent?: string[];
 };
 
 export type KeptMail = {
@@ -56,24 +58,49 @@ function decodeLine(line: string) {
   }
 }
 
-async function listBucket(bucket: string) {
-  const reply = await postHook({ kind: "records", bucket }, 12_000);
-  const rows: { key: string; payload: string }[] = [];
-  for (const line of reply.split("\n").slice(1)) {
-    if (!line.trim()) continue;
-    const decoded = decodeLine(line.trim());
-    if (decoded) rows.push(decoded);
+type BucketRow = { key: string; payload: string };
+
+async function readBucket(bucket: string, timeoutMs = 20_000): Promise<{ ok: true; rows: BucketRow[] } | { ok: false }> {
+  try {
+    const reply = await postHook({ kind: "records", bucket }, timeoutMs);
+    if (!reply.startsWith("ok")) return { ok: false };
+    const rows: BucketRow[] = [];
+    for (const line of reply.split("\n").slice(1)) {
+      if (!line.trim()) continue;
+      const decoded = decodeLine(line.trim());
+      if (decoded) rows.push(decoded);
+    }
+    return { ok: true, rows };
+  } catch {
+    return { ok: false };
   }
-  return rows;
+}
+
+async function listBucket(bucket: string) {
+  const result = await readBucket(bucket);
+  if (!result.ok) throw new Error("record list failed");
+  return result.rows;
 }
 
 async function saveRecord(bucket: string, key: string, payload: string) {
-  if (!hookReady()) return;
+  if (!hookReady()) return false;
   try {
-    await postHook({ kind: "record", bucket, key, payload }, 12_000);
+    const reply = await postHook({ kind: "record", bucket, key, payload }, 20_000);
+    return reply.startsWith("ok");
   } catch {
-    // The local row remains until the next successful save.
+    return false;
   }
+}
+
+/** The old mail log stored one row per role and filled the only lasting store. Drop a batch so a signup can fit. */
+async function makeRoom() {
+  const listed = await readBucket("mail", 25_000);
+  if (!listed.ok || listed.rows.length < 20) return false;
+  const extra = listed.rows.slice(0, 80);
+  for (let index = 0; index < extra.length; index += 8) {
+    await Promise.all(extra.slice(index, index + 8).map((row) => forgetRecord("mail", row.key)));
+  }
+  return true;
 }
 
 async function forgetRecord(bucket: string, key: string) {
@@ -90,28 +117,54 @@ function cleanText(value: string, limit: number) {
 }
 
 function subscriberPayload(row: KeptSubscriber) {
+  const sent = (row.sent ?? []).filter((key) => key.includes("\t")).slice(0, 2000);
   const body = {
     name: cleanText(row.name || row.email, 80),
     email: row.email,
-    studies: cleanText(row.studies || "", 2000),
-    cvText: cleanText(row.cvText || "", 3500),
+    studies: cleanText(row.studies || "", 4000),
+    cvText: cleanText(row.cvText || "", 20000),
     consentAt: row.consentAt || row.createdAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt || row.createdAt,
+    sent,
   };
   let payload = JSON.stringify(body);
-  if (payload.length > 7000) {
-    body.cvText = body.cvText.slice(0, 1200);
-    body.studies = body.studies.slice(0, 600);
+  if (payload.length > 60_000) {
+    body.sent = sent.slice(0, 400);
+    payload = JSON.stringify(body);
+  }
+  if (payload.length > 60_000) {
+    body.cvText = body.cvText.slice(0, 4000);
+    body.studies = body.studies.slice(0, 1500);
     payload = JSON.stringify(body);
   }
   return payload;
 }
 
+function sameSignup(row: KeptSubscriber, saved: BucketRow) {
+  if (saved.key.toLowerCase() !== row.email.toLowerCase()) return false;
+  try {
+    const parsed = JSON.parse(saved.payload) as { email?: string };
+    return parsed.email?.toLowerCase() === row.email.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+/** Save the signup where it survives a restart. False when that copy was not stored. */
 export async function rememberSubscriber(row: KeptSubscriber) {
-  if (!row.email || !row.createdAt) return;
-  await saveRecord("subscriber", row.email, subscriberPayload(row));
+  if (!row.email || !row.createdAt) return false;
+  if (!hookReady()) return process.env.RENDER !== "true";
+  const payload = subscriberPayload(row);
+  let saved = await saveRecord("subscriber", row.email, payload);
+  for (let attempt = 0; !saved && attempt < 6; attempt += 1) {
+    if (!(await makeRoom())) break;
+    saved = await saveRecord("subscriber", row.email, payload);
+  }
   invalidateStudyRecords();
+  if (!saved) return false;
+  const listed = await readBucket("subscriber");
+  return listed.ok && listed.rows.some((item) => sameSignup(row, item));
 }
 
 export async function forgetSubscriber(email: string) {
@@ -174,16 +227,18 @@ async function loadBundle(): Promise<KeptBundle> {
 }
 
 async function fetchBundle(): Promise<KeptBundle> {
-  const [subscribers, mailRows, seenRows] = await Promise.all([
-    listBucket("subscriber"),
-    listBucket("mail"),
-    listBucket("seen"),
-  ]);
+  const subscribers = await readBucket("subscriber");
+  const mailListed = await readBucket("mail");
+  const seenListed = await readBucket("seen");
+  if (!subscribers.ok && !mailListed.ok) throw new Error("record list failed");
+  const mailRows = mailListed.ok ? mailListed.rows : [];
+  const seenRows = seenListed.ok ? seenListed.rows : [];
   const people: KeptSubscriber[] = [];
-  for (const row of subscribers) {
+  for (const row of subscribers.ok ? subscribers.rows : []) {
     try {
       const parsed = JSON.parse(row.payload) as KeptSubscriber;
-      if (!parsed?.email || parsed.email !== row.key) continue;
+      if (!parsed?.email || parsed.email.toLowerCase() !== row.key.toLowerCase()) continue;
+      if (!Array.isArray(parsed.sent)) parsed.sent = [];
       people.push(parsed);
     } catch {
       // Skip a damaged row.
@@ -248,6 +303,14 @@ function applyBundle(bundle: KeptBundle) {
         person.createdAt,
         person.updatedAt || person.createdAt,
       );
+      const stored = findPerson.get(person.email) as { id: number } | undefined;
+      for (const key of person.sent ?? []) {
+        const splitAt = key.indexOf("\t");
+        if (!stored || splitAt <= 0) continue;
+        const job = findJob.get(key.slice(0, splitAt), key.slice(splitAt + 1)) as { id: number } | undefined;
+        if (!job) continue;
+        upsertMail.run(stored.id, job.id, "sent", null, person.updatedAt || person.createdAt);
+      }
     }
     for (const item of bundle.mail) {
       const person = findPerson.get(item.email) as { id: number } | undefined;

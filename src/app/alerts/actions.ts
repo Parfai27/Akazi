@@ -77,7 +77,9 @@ export async function subscribe(_prev: AlertState, formData: FormData): Promise<
   }
 
   const stored = db.select().from(subscribers).where(eq(subscribers.id, subscriberId!)).get();
-  if (stored) await rememberSubscriber(stored);
+  if (!stored || !(await rememberSubscriber(stored))) {
+    return { error: "Your details could not be saved. Please try again." };
+  }
   revalidatePath("/admin");
   revalidatePath("/admin/alerts");
   const result = await matchSubscriber(subscriberId!);
