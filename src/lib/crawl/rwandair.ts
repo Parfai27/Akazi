@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { extractText } from "unpdf";
+import { extractText, getDocumentProxy } from "unpdf";
 import { fetchText } from "./http";
 import type { RawJob } from "./types";
 
@@ -96,20 +96,46 @@ async function detailFields(id: string) {
   return { appointment, reportsTo };
 }
 
+async function quietly<T>(work: () => Promise<T>) {
+  const write = console.log;
+  const warn = console.warn;
+  const skip = (args: unknown[]) => typeof args[0] === "string" && args[0].includes("TT:");
+  console.log = (...args: unknown[]) => {
+    if (!skip(args)) write(...args);
+  };
+  console.warn = (...args: unknown[]) => {
+    if (!skip(args)) warn(...args);
+  };
+  try {
+    return await work();
+  } finally {
+    console.log = write;
+    console.warn = warn;
+  }
+}
+
 async function pdfText(id: string) {
   const response = await fetch(`${PORTAL}Jobs/DownloadDetails?no=${encodeURIComponent(id)}`, {
     headers: { accept: "application/pdf", "user-agent": USER_AGENT },
     redirect: "follow",
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(20_000),
   });
   if (!response.ok) return "";
   const bytes = new Uint8Array(await response.arrayBuffer());
-  const extracted = (await extractText(bytes, { mergePages: true })) as { text?: string | string[] };
-  const value = extracted.text;
-  return (Array.isArray(value) ? value.join("\n") : (value ?? ""))
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  if (bytes.byteLength < 100 || bytes.byteLength > 6_000_000) return "";
+  const pdf = await quietly(() => getDocumentProxy(bytes, { verbosity: 0 }));
+  try {
+    const extracted = await quietly(() => extractText(pdf, { mergePages: true }));
+    const value = extracted.text;
+    return (Array.isArray(value) ? value.join("\n") : (value ?? ""))
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  } finally {
+    const closable = pdf as { destroy?: () => Promise<void> | void; cleanup?: () => void };
+    await closable.destroy?.();
+    closable.cleanup?.();
+  }
 }
 
 function locatedInKigali(text: string) {
@@ -163,10 +189,6 @@ export async function readRwandAir(): Promise<RawJob[]> {
   const html = await fetchText(PORTAL, "text/html");
   const rows = listings(html);
   const jobs: RawJob[] = [];
-  const width = 4;
-  for (let index = 0; index < rows.length; index += width) {
-    const batch = await Promise.all(rows.slice(index, index + width).map((row) => oneJob(row)));
-    jobs.push(...batch);
-  }
+  for (const row of rows) jobs.push(await oneJob(row));
   return jobs;
 }
