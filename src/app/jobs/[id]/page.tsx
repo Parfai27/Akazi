@@ -5,11 +5,10 @@ import { AdSlot } from "@/components/ad-slot";
 import { CompanyMark } from "@/components/company-mark";
 import { JobDescription } from "@/components/job-description";
 import { JobShare } from "@/components/job-share";
+import { JobViewers } from "@/components/job-viewers";
 import { ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
 import { adConfig } from "@/lib/ads";
-import { sqlite } from "@/db";
 import { getJob } from "@/lib/jobs";
-import { jobViewerCount } from "@/lib/record-log";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
 import { placeLabel, workModeLabel } from "@/lib/tag";
 import { micro1ReferralApplyUrl } from "@/lib/micro1-referral";
@@ -52,11 +51,6 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
   const showPlace = place.toLowerCase() !== mode.toLowerCase();
   const showLocation = Boolean(job.location && !/^(remote|hybrid|on-?site)$/i.test(job.location.trim()));
   const ads = adConfig();
-  const keptViewers = await jobViewerCount(job.sourceId, job.externalId);
-  const localViewers = sqlite()
-    .prepare("SELECT COUNT(DISTINCT visitor) AS total FROM visits WHERE path = ?")
-    .get(`/jobs/${job.publicId}`) as { total: number } | undefined;
-  const viewers = keptViewers ?? Number(localViewers?.total ?? 0);
 
   return (
     <article>
@@ -86,10 +80,15 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
             <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{mode}</span>
             {showPlace ? <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{place}</span> : null}
             <span className="rounded-md bg-amber px-2.5 py-1 text-clay">{functionLabel(jobFunction(job.title))}</span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-chip px-2.5 py-1 font-semibold text-forest" aria-label={`${viewers} people viewed this role`}>
-              <EyeIcon />
-              <span className="text-ink">{viewers}</span>
-            </span>
+            <Suspense
+              fallback={
+                <span className="inline-flex items-center gap-1 rounded-md bg-chip px-2.5 py-1 font-semibold text-forest" aria-hidden="true">
+                  <EyeIcon />
+                </span>
+              }
+            >
+              <JobViewers publicId={job.publicId} sourceId={job.sourceId} externalId={job.externalId} />
+            </Suspense>
           </div>
 
           {!job.isActive ? (

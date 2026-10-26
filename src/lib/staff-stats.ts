@@ -1,7 +1,7 @@
 import { io } from "next/cache";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
-import { rememberJobViewer, restoreStudyRecords } from "@/lib/record-log";
+import { countRoleViewers, rememberJobViewer, restoreStudyRecords } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits, rememberVisit } from "@/lib/visit-log";
 
 const ZONE = "Africa/Kigali";
@@ -80,7 +80,7 @@ function tally(rows: VisitRow[], from: string, to: string): VisitTotals {
   return { people: people.size, visits };
 }
 
-export async function recordVisit(visitor: string, path: string) {
+export async function recordVisit(visitor: string, path: string): Promise<number | null> {
   const day = kigaliDay();
   let role: JobFunction | null = null;
   const match = /^\/jobs\/([0-9a-f]{16})$/.exec(path);
@@ -102,7 +102,9 @@ export async function recordVisit(visitor: string, path: string) {
     )
     .run(day, visitor, path, role, new Date().toISOString());
   await rememberVisit({ day, visitor, path, jobFunction: role });
+  if (!match) return null;
   if (viewed) await rememberJobViewer(viewed.sourceId, viewed.externalId, visitor);
+  return countRoleViewers(match[1], viewed);
 }
 
 export async function getStaffStats(): Promise<StaffStats> {

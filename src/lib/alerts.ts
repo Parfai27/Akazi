@@ -103,40 +103,9 @@ async function rememberKept(
 }
 
 function subjectLine(openings: JobRecord[]) {
-  if (openings.length === 1) return `Akazi: ${openings[0]?.title ?? "New opening"}`;
-  return `Akazi: ${openings.length} openings`;
-}
-
-function logoMark() {
-  const bar = (height: number) =>
-    `<td width="8" height="${height}" valign="bottom" bgcolor="#ffffff" style="width:8px;height:${height}px;background-color:#ffffff;border-radius:4px;font-size:1px;line-height:${height}px;">&nbsp;</td>`;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" width="44" height="44" style="display:inline-table;width:44px;height:44px;vertical-align:middle;border-radius:10px;">
-    <tr>
-      <td width="44" height="44" align="center" valign="bottom" bgcolor="#1e6b58" style="width:44px;height:44px;background-color:#1e6b58;border-radius:10px;padding:0 0 6px;">
-        <table role="presentation" cellpadding="0" cellspacing="0">
-          <tr>
-            ${bar(14)}
-            <td width="3" style="width:3px;font-size:1px;line-height:1px;">&nbsp;</td>
-            ${bar(20)}
-            <td width="3" style="width:3px;font-size:1px;line-height:1px;">&nbsp;</td>
-            <td width="8" valign="bottom" style="width:8px;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="8" height="8" bgcolor="#f0b429" style="width:8px;height:8px;background-color:#f0b429;border-radius:4px;font-size:1px;line-height:8px;">&nbsp;</td>
-                </tr>
-                <tr>
-                  <td height="2" style="height:2px;font-size:1px;line-height:2px;">&nbsp;</td>
-                </tr>
-                <tr>
-                  ${bar(22)}
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>`;
+  const opening = openings[0];
+  if (openings.length === 1 && opening) return `${opening.title} at ${opening.company}`;
+  return `${openings.length} roles that match your studies`;
 }
 
 function escapeHtml(value: string) {
@@ -156,89 +125,42 @@ function alertIntro(count: number) {
 function alertMessage(person: Pick<SubscriberRecord, "name">, openings: JobRecord[]) {
   const home = siteUrl();
   const intro = alertIntro(openings.length);
+  const stop = "You asked Akazi to send these notes. Reply to this email if you want them to stop.";
+  const roles = openings.map((job) => {
+    const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
+      .filter(Boolean)
+      .join(", ");
+    return {
+      line: `${job.title} at ${job.company}. ${where}. ${deadlineLabel(job.deadlineAt)}.`,
+      href: `${home}/jobs/${job.publicId}`,
+    };
+  });
   const text = [
     `Hello ${person.name},`,
     "",
     intro,
     "",
-    openings
-      .map((job) => {
-        const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
-          .filter(Boolean)
-          .join(" · ");
-        return [`${job.title} — ${job.company}`, where, deadlineLabel(job.deadlineAt), `${home}/jobs/${job.publicId}`].join("\n");
-      })
-      .join("\n\n"),
+    roles.map((role) => `${role.line}\n${role.href}`).join("\n\n"),
     "",
-    "Akazi only sends these notes because you agreed to email alerts.",
+    stop,
+    "",
+    "Akazi",
     home,
   ].join("\n");
 
-  const cards = openings
-    .map((job) => {
-      const href = `${home}/jobs/${job.publicId}`;
-      const where = [job.location || "Location not listed", job.workMode === "remote" ? "Remote" : job.workMode === "hybrid" ? "Hybrid" : ""]
-        .filter(Boolean)
-        .join(" · ");
-      return `
-        <tr>
-          <td style="padding:0 0 16px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e3ebe7;border-radius:14px;">
-              <tr>
-                <td style="padding:18px 18px 8px;font-family:'Segoe UI',Arial,sans-serif;">
-                  <div style="color:#171a21;font-size:18px;font-weight:800;line-height:24px;">${escapeHtml(job.title)}</div>
-                  <div style="margin-top:4px;color:#1e6b58;font-size:14px;font-weight:700;">${escapeHtml(job.company)}</div>
-                  <div style="margin-top:8px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(where)}</div>
-                  <div style="margin-top:2px;color:#6b7280;font-size:14px;line-height:20px;">${escapeHtml(deadlineLabel(job.deadlineAt))}</div>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:8px 18px 18px;">
-                  <a href="${href}" style="display:inline-block;background:#1e6b58;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;font-size:14px;font-weight:700;line-height:20px;text-decoration:none;padding:10px 16px;border-radius:10px;">View role</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>`;
-    })
-    .join("");
-
   const html = `<!DOCTYPE html>
 <html lang="en">
-  <body style="margin:0;padding:0;background:#f2f7f5;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(intro)}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f7f5;">
-      <tr>
-        <td align="center" style="padding:24px 12px;">
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;">
-            <tr>
-              <td style="background:#1e6b58;padding:22px 24px;">
-                ${logoMark()}
-                <span style="display:inline-block;margin-left:12px;color:#ffffff;font-family:'Segoe UI',Arial,sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.04em;vertical-align:middle;">Akazi</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:24px 24px 8px;font-family:'Segoe UI',Arial,sans-serif;color:#171a21;">
-                <div style="font-size:16px;line-height:24px;">Hello ${escapeHtml(person.name)},</div>
-                <div style="margin-top:8px;font-size:16px;line-height:24px;">${escapeHtml(intro)}</div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 24px 0;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${cards}</table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:4px 24px 24px;font-family:'Segoe UI',Arial,sans-serif;color:#6b7280;font-size:13px;line-height:20px;">
-                Akazi only sends these notes because you agreed to email alerts.
-                <br />
-                <a href="${home}" style="color:#1e6b58;text-decoration:none;">${escapeHtml(home.replace(/^https?:\/\//, ""))}</a>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+  <body style="margin:0;padding:24px;background:#ffffff;color:#171a21;font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:24px;">
+    <p style="margin:0 0 16px;">Hello ${escapeHtml(person.name)},</p>
+    <p style="margin:0 0 16px;">${escapeHtml(intro)}</p>
+    ${roles
+      .map(
+        (role) =>
+          `<p style="margin:0 0 16px;">${escapeHtml(role.line)}<br /><a href="${role.href}" style="color:#1e6b58;">${escapeHtml(role.href)}</a></p>`,
+      )
+      .join("")}
+    <p style="margin:0 0 16px;">${escapeHtml(stop)}</p>
+    <p style="margin:0;">Akazi<br /><a href="${home}" style="color:#1e6b58;">${escapeHtml(home)}</a></p>
   </body>
 </html>`;
 

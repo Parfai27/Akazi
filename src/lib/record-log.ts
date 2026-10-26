@@ -336,6 +336,15 @@ export async function jobViewerCount(sourceId: string, externalId: string): Prom
   }
 }
 
+/** Distinct people for one role, using whichever log currently holds more of them. */
+export async function countRoleViewers(publicId: string, job?: { sourceId: string; externalId: string } | null) {
+  const local = sqlite()
+    .prepare("SELECT COUNT(DISTINCT visitor) AS total FROM visits WHERE path = ?")
+    .get(`/jobs/${publicId}`) as { total: number } | undefined;
+  const kept = job ? await jobViewerCount(job.sourceId, job.externalId) : null;
+  return Math.max(kept ?? 0, Number(local?.total ?? 0));
+}
+
 export async function loadKeptMail(): Promise<KeptMail[] | null> {
   if (!hookReady()) return null;
   try {

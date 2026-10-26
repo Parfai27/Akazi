@@ -25,9 +25,9 @@ export async function POST(request: Request) {
   } catch {
     path = "";
   }
-  if (path) await recordVisit(visitor, path);
+  const viewers = path ? await recordVisit(visitor, path) : null;
 
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true, viewers });
   response.cookies.set(COOKIE, visitor, {
     httpOnly: true,
     sameSite: "lax",
