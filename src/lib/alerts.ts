@@ -84,7 +84,7 @@ function remember(subscriberId: number, jobId: number, status: string, detail: s
 }
 
 async function rememberKept(
-  person: Pick<SubscriberRecord, "email">,
+  person: Pick<SubscriberRecord, "email" | "name">,
   job: Pick<JobRecord, "sourceId" | "externalId" | "title" | "company">,
   status: string,
   detail: string | null,
@@ -92,6 +92,7 @@ async function rememberKept(
 ) {
   await rememberMail({
     email: person.email,
+    name: person.name,
     sourceId: job.sourceId,
     externalId: job.externalId,
     title: job.title,

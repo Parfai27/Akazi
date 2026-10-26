@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { sqlite } from "@/db";
 import { JOB_FUNCTIONS, jobFunction, type JobFunction } from "@/lib/organize";
 import { countRoleViewers, rememberJobViewer, restoreStudyRecords } from "@/lib/record-log";
+import { listSignups } from "@/lib/staff-directory";
 import { loadRememberedVisits, mergeVisits, rememberVisit } from "@/lib/visit-log";
 
 const ZONE = "Africa/Kigali";
@@ -152,9 +153,9 @@ export async function getStaffStats(): Promise<StaffStats> {
 
   const people = new Set(stored.map((row) => row.visitor));
   const all: VisitTotals = { people: people.size, visits: stored.length };
-  const created = sqlite().prepare("SELECT created_at AS createdAt FROM subscribers").all() as { createdAt: string }[];
+  const signups = await listSignups();
   const signupCounts = new Map(monthKeys.map((key) => [key, 0]));
-  for (const row of created) {
+  for (const row of signups) {
     const date = new Date(row.createdAt);
     if (Number.isNaN(date.getTime())) continue;
     const key = kigaliDay(date).slice(0, 7);
@@ -170,7 +171,7 @@ export async function getStaffStats(): Promise<StaffStats> {
     months,
     functions,
     signupsThisMonth: signupCounts.get(today.slice(0, 7)) ?? 0,
-    signupsTotal: created.length,
+    signupsTotal: signups.length,
     signupMonths: monthKeys.map((key) => ({ label: shortMonth(key), count: signupCounts.get(key) ?? 0 })),
   };
 }

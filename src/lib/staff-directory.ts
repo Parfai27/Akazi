@@ -106,7 +106,7 @@ export async function getOpeningRows(): Promise<OpeningRow[]> {
     .sort((a, b) => b.views - a.views || Number(b.active) - Number(a.active) || a.title.localeCompare(b.title));
 }
 
-export async function getAlertRows(): Promise<AlertRow[]> {
+export async function listSignups(): Promise<AlertRow[]> {
   await connection();
   await io();
   await restoreStudyRecords();
@@ -125,6 +125,10 @@ export async function getAlertRows(): Promise<AlertRow[]> {
     hasCv: row.cvLength > 40,
     createdAt: row.createdAt,
   }));
+}
+
+export async function getAlertRows(): Promise<AlertRow[]> {
+  return listSignups();
 }
 
 export async function getSourceRows(): Promise<SourceRow[]> {

@@ -12,6 +12,7 @@ export type KeptSubscriber = {
 
 export type KeptMail = {
   email: string;
+  name?: string;
   sourceId: string;
   externalId: string;
   title: string;
@@ -88,20 +89,28 @@ function cleanText(value: string, limit: number) {
   return value.replace(/\u0000/g, "").slice(0, limit);
 }
 
+function subscriberPayload(row: KeptSubscriber) {
+  const body = {
+    name: cleanText(row.name || row.email, 80),
+    email: row.email,
+    studies: cleanText(row.studies || "", 2000),
+    cvText: cleanText(row.cvText || "", 3500),
+    consentAt: row.consentAt || row.createdAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt || row.createdAt,
+  };
+  let payload = JSON.stringify(body);
+  if (payload.length > 7000) {
+    body.cvText = body.cvText.slice(0, 1200);
+    body.studies = body.studies.slice(0, 600);
+    payload = JSON.stringify(body);
+  }
+  return payload;
+}
+
 export async function rememberSubscriber(row: KeptSubscriber) {
-  await saveRecord(
-    "subscriber",
-    row.email,
-    JSON.stringify({
-      name: cleanText(row.name, 80),
-      email: row.email,
-      studies: cleanText(row.studies, 4000),
-      cvText: cleanText(row.cvText, 20000),
-      consentAt: row.consentAt,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }),
-  );
+  if (!row.email || !row.createdAt) return;
+  await saveRecord("subscriber", row.email, subscriberPayload(row));
   invalidateStudyRecords();
 }
 
@@ -117,6 +126,7 @@ export async function rememberMail(row: KeptMail) {
     key,
     JSON.stringify({
       email: row.email,
+      name: cleanText(row.name || "", 80),
       sourceId: row.sourceId,
       externalId: row.externalId,
       title: cleanText(row.title, 200),
@@ -255,12 +265,41 @@ function applyBundle(bundle: KeptBundle) {
   write();
 }
 
+function withMailSignups(bundle: KeptBundle): KeptBundle {
+  const people = [...bundle.subscribers];
+  const seen = new Set(people.map((person) => person.email.toLowerCase()));
+  const earliest = new Map<string, KeptMail>();
+  for (const item of bundle.mail) {
+    const email = item.email.toLowerCase();
+    const current = earliest.get(email);
+    if (!current || (item.createdAt && item.createdAt < current.createdAt)) earliest.set(email, item);
+  }
+  for (const item of earliest.values()) {
+    if (seen.has(item.email.toLowerCase()) || !item.createdAt) continue;
+    people.push({
+      name: item.name || item.email,
+      email: item.email,
+      studies: "",
+      cvText: "",
+      consentAt: item.createdAt,
+      createdAt: item.createdAt,
+      updatedAt: item.createdAt,
+    });
+  }
+  return { ...bundle, subscribers: people };
+}
+
 /** Put saved signups, mail history, and reviewed openings back into the local database. */
 export async function restoreStudyRecords(): Promise<Set<string>> {
   if (!hookReady()) return new Set();
   try {
     const bundle = await loadBundle();
-    applyBundle(bundle);
+    const merged = withMailSignups(bundle);
+    applyBundle(merged);
+    const saved = new Set(bundle.subscribers.map((person) => person.email.toLowerCase()));
+    for (const person of merged.subscribers) {
+      if (!saved.has(person.email.toLowerCase())) await rememberSubscriber(person);
+    }
     return new Set(bundle.reviewed);
   } catch {
     return new Set();
