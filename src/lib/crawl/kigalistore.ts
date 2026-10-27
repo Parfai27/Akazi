@@ -116,20 +116,41 @@ function employerLinks(html: string, pageUrl: string): string[] {
   return found;
 }
 
+function applicationEmail(text: string): string | null {
+  const found = text.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi) ?? [];
+  const blocked = ["kigalistore.com", "example.com", "sentry.io", "wixpress.com"];
+  for (const email of found) {
+    const host = email.split("@")[1]?.toLowerCase() ?? "";
+    if (blocked.some((name) => host === name || host.endsWith(`.${name}`))) continue;
+    return `mailto:${email.toLowerCase()}`;
+  }
+  return null;
+}
+
+function dutyStation(text: string): string {
+  const match = text.match(/duty station:\s*([^\n]+)/i);
+  if (!match) return "";
+  return match[1].replace(/\s+/g, " ").trim().replace(/[.\s]+$/, "");
+}
+
 function postingFrom(html: string, pageUrl: string): RawJob[] {
   const job = blocks(html).find((block) => block["@type"] === "JobPosting");
   if (!job) return [];
   const title = typeof job.title === "string" ? decode(job.title).replace(/\s+/g, " ") : "";
   const links = employerLinks(html, pageUrl);
-  if (!title || links.length === 0) return [];
   const description = typeof job.description === "string" ? cleanPostingText(decode(htmlToText(job.description))) : "";
+  const email = links.length === 0 ? applicationEmail(description) : null;
+  if (!title || (links.length === 0 && !email)) return [];
   const roles = splitTitledRoles(description);
   const shared = {
     company: decode(companyOf(job)).replace(/\s+/g, " "),
-    location: locationOf(job),
+    location: dutyStation(description) || locationOf(job),
     postedAt: isoDate(job.datePosted),
     deadlineAt: isoDate(job.validThrough),
   };
+  if (email) {
+    return [{ ...shared, externalId: pageUrl, title, description, applyUrl: email, sourceUrl: pageUrl }];
+  }
   if (!roles || roles.length !== links.length) {
     return [{ ...shared, externalId: pageUrl, title, description, applyUrl: links[0], sourceUrl: links[0] }];
   }

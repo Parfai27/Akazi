@@ -82,6 +82,7 @@ const LOGOS: Record<string, CompanyLogo> = {
   RSSB: { src: "/logos/rssb.png", cover: true },
   "Inzira Creative Partners": { src: "/logos/inzira-creative.png", bg: "#000000" },
   "Urunana Development Communication": { src: "/logos/urunana.jpg" },
+  "Community Based Health Promoters Rwanda": { src: "/logos/cbhp.webp" },
 };
 
 const GOVERNMENT_LOGO = { src: "/logos/rwanda-coat.png" };

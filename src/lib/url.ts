@@ -9,6 +9,15 @@ export function safeHttpUrl(value: string | undefined | null, base?: string): st
   }
 }
 
+/** An apply link may be the employer site or the employer's email. */
+export function safeApplyUrl(value: string | undefined | null): string | null {
+  const http = safeHttpUrl(value);
+  if (http) return http;
+  if (!value) return null;
+  const match = value.trim().match(/^mailto:([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})$/i);
+  return match ? `mailto:${match[1]}` : null;
+}
+
 function parseDate(value: string): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;

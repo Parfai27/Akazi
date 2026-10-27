@@ -12,7 +12,7 @@ import { getJob } from "@/lib/jobs";
 import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
 import { placeLabel, workModeLabel } from "@/lib/tag";
 import { micro1ReferralApplyUrl } from "@/lib/micro1-referral";
-import { deadlineLabel, formatPosted, safeHttpUrl } from "@/lib/url";
+import { deadlineLabel, formatPosted, safeApplyUrl, safeHttpUrl } from "@/lib/url";
 
 type Params = { id: string };
 
@@ -42,8 +42,8 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
   const posted = formatPosted(job.postedAt);
   const applyUrl =
     job.sourceId === "micro1"
-      ? micro1ReferralApplyUrl(job.externalId) ?? safeHttpUrl(job.applyUrl)
-      : safeHttpUrl(job.applyUrl);
+      ? micro1ReferralApplyUrl(job.externalId) ?? safeApplyUrl(job.applyUrl)
+      : safeApplyUrl(job.applyUrl);
   const sourceUrl = job.sourceId === "micro1" ? applyUrl : safeHttpUrl(job.sourceUrl);
   const soon = deadlineKind(job.deadlineAt) === "soon";
   const place = placeLabel(job.place);
