@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { companyLogo } from "@/lib/company-logos";
+import { companyLogo, employerIcon } from "@/lib/company-logos";
 import { getJob } from "@/lib/jobs";
 
 export const alt = "Company logo";
@@ -40,7 +40,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const { id } = await params;
   const job = await getJob(id);
   const company = job?.company ?? "Akazi";
-  const logo = job ? companyLogo(job.company) : null;
+  const logo = job ? (companyLogo(job.company) ?? employerIcon(job.applyUrl)) : null;
   const src = logo ? await logoData(logo.src).catch(() => null) : null;
   const letter = company.trim().charAt(0).toUpperCase() || "A";
   const cover = Boolean(logo?.cover);

@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { companyLogo } from "@/lib/company-logos";
+import { companyLogo, employerIcon } from "@/lib/company-logos";
 
-export function CompanyMark({ name, size = "md" }: { name: string; size?: "md" | "lg" }) {
-  const logo = companyLogo(name);
-  const [failed, setFailed] = useState(false);
+export function CompanyMark({
+  name,
+  website,
+  size = "md",
+}: {
+  name: string;
+  website?: string;
+  size?: "md" | "lg";
+}) {
+  const logo = companyLogo(name) ?? employerIcon(website);
+  const [failedSrc, setFailedSrc] = useState("");
+  const failed = Boolean(logo && failedSrc === logo.src);
   const box = size === "lg" ? "size-14 rounded-2xl" : "size-12 rounded-xl";
   const letter = name.trim().charAt(0).toUpperCase() || "A";
 
@@ -29,9 +38,9 @@ export function CompanyMark({ name, size = "md" }: { name: string; size?: "md" |
         alt=""
         className={`size-full ${logo.cover ? "object-cover" : "object-contain"}`}
         onLoad={(event) => {
-          if (event.currentTarget.naturalWidth === 0) setFailed(true);
+          if (event.currentTarget.naturalWidth === 0) setFailedSrc(logo.src);
         }}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(logo.src)}
       />
     </span>
   );

@@ -17,7 +17,7 @@ export function JobCard({ job }: { job: JobRecord }) {
         className="group flex h-full flex-col rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(30,107,88,0.12)]"
       >
         <div className="flex items-center gap-3">
-          <CompanyMark name={job.company} />
+          <CompanyMark name={job.company} website={job.applyUrl} />
           <p className="line-clamp-2 text-sm font-semibold text-forest">{job.company}</p>
         </div>
         <h2 className="mt-4 text-lg font-bold leading-snug tracking-tight text-ink group-hover:text-forest">

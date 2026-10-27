@@ -1,5 +1,7 @@
+export type CompanyLogo = { src: string; cover?: boolean; bg?: string };
+
 /** Public logos from each employer's own career page. `cover` fills the box when the file is already a square mark. */
-const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
+const LOGOS: Record<string, CompanyLogo> = {
   "One Acre Fund": { src: "/logos/one-acre-fund.svg" },
   "One Acre Fund Rwanda": {
     src: "https://recruiting.cdn.greenhouse.io/external_greenhouse_job_boards/logos/000/011/119/original/Tubura_Logo.png?1759831322",
@@ -34,7 +36,7 @@ const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
   GitLab: { src: "https://about.gitlab.com/favicon.ico", cover: true },
   PostHog: { src: "/logos/Posthog.png" },
   Supabase: { src: "/logos/supabase.png", cover: true },
-  "M-KOPA": { src: "https://www.m-kopa.com/favicon.ico", cover: true },
+  "M-KOPA": { src: "/logos/m-kopa.svg" },
   IDinsight: { src: "https://www.idinsight.org/favicon.ico", cover: true },
   LemFi: { src: "https://www.lemfi.com/favicon.ico", cover: true },
   Zapier: { src: "https://zapier.com/favicon.ico", cover: true },
@@ -77,11 +79,54 @@ const LOGOS: Record<string, { src: string; cover?: boolean; bg?: string }> = {
   "National Institute of Statistics of Rwanda": { src: "/logo-rwanda-nisr-transparent_0.png" },
   "NATIONAL INSTITUTE OF STATISTICS OF RWANDA": { src: "/logo-rwanda-nisr-transparent_0.png" },
   NISR: { src: "/logo-rwanda-nisr-transparent_0.png" },
+  RSSB: { src: "/logos/rssb.png", cover: true },
+  "Inzira Creative Partners": { src: "/logos/inzira-creative.png", bg: "#000000" },
+  "Urunana Development Communication": { src: "/logos/urunana.jpg" },
 };
 
 const GOVERNMENT_LOGO = { src: "/logos/rwanda-coat.png" };
 
-export function companyLogo(name: string) {
+/** Job boards and form hosts. Their icon is not the employer's mark. */
+const BOARD_HOSTS = [
+  "jobinrwanda.com",
+  "kigalistore.com",
+  "linkedin.com",
+  "ashbyhq.com",
+  "greenhouse.io",
+  "lever.co",
+  "workable.com",
+  "breezy.hr",
+  "myworkdayjobs.com",
+  "workday.com",
+  "oraclecloud.com",
+  "mifotra.gov.rw",
+  "office.com",
+  "office365.com",
+  "microsoft.com",
+  "live.com",
+  "docs.google.com",
+  "forms.gle",
+  "google.com",
+  "facebook.com",
+  "whatsapp.com",
+  "wa.me",
+  "instagram.com",
+  "twitter.com",
+  "x.com",
+  "youtube.com",
+  "t.me",
+  "smartrecruiters.com",
+  "successfactors.com",
+  "taleo.net",
+  "icims.com",
+  "recruitee.com",
+  "bamboohr.com",
+  "personio.com",
+  "teamtailor.com",
+  "qtsoftwareltd.com",
+];
+
+export function companyLogo(name: string): CompanyLogo | null {
   return (
     LOGOS[name] ??
     (/\brwandair\b/i.test(name)
@@ -90,8 +135,21 @@ export function companyLogo(name: string) {
         ? LOGOS["Directorate General of Immigration and Emigration"]
         : /\bnational institute of statistics\b|\bnisr\b/i.test(name)
           ? LOGOS.NISR
-          : /\b(district|ministry|board|commission|agency)\b/i.test(name)
+          : /\b(district|ministry|board|commission|agency|city of|teaching hospital)\b/i.test(name)
             ? GOVERNMENT_LOGO
             : null)
   );
+}
+
+/** Icon from the employer's own site, for a company that has no saved mark yet. */
+export function employerIcon(applyUrl: string | null | undefined): CompanyLogo | null {
+  if (!applyUrl) return null;
+  let host = "";
+  try {
+    host = new URL(applyUrl).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+  if (!host || BOARD_HOSTS.some((name) => host === name || host.endsWith(`.${name}`))) return null;
+  return { src: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128` };
 }

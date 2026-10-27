@@ -69,7 +69,7 @@ async function JobDetail({ params }: { params: Promise<Params> }) {
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div>
           <div className="flex min-w-0 items-start gap-4">
-            <CompanyMark name={job.company} size="lg" />
+            <CompanyMark name={job.company} website={job.applyUrl} size="lg" />
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">{job.title}</h1>
               <p className="mt-1 text-sm font-semibold text-forest">{job.company}</p>
