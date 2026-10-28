@@ -3,6 +3,8 @@ import { AlertTable } from "@/components/alert-table";
 import { isAdmin } from "@/lib/admin-auth";
 import { getAlertRows } from "@/lib/staff-directory";
 
+export const instant = false;
+
 export const metadata = {
   title: "Alerts",
   robots: { index: false, follow: false },

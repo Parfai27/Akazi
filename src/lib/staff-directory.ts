@@ -131,6 +131,22 @@ export async function getAlertRows(): Promise<AlertRow[]> {
   return listSignups();
 }
 
+export async function getSignup(id: number) {
+  await connection();
+  await io();
+  await restoreStudyRecords();
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const row = sqlite()
+    .prepare(
+      `SELECT id, name, email, studies, cv_text AS cvText, created_at AS createdAt
+       FROM subscribers WHERE id = ?`,
+    )
+    .get(id) as
+    | { id: number; name: string; email: string; studies: string; cvText: string; createdAt: string }
+    | undefined;
+  return row ?? null;
+}
+
 export async function getSourceRows(): Promise<SourceRow[]> {
   await io();
   const sources = sqlite()

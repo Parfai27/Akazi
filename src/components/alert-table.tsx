@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { removeSubscriber } from "@/app/admin/actions";
 import type { AlertRow } from "@/lib/staff-directory";
 import { formatPosted } from "@/lib/url";
@@ -64,7 +65,23 @@ export function AlertTable({ rows }: { rows: AlertRow[] }) {
                     </a>
                   </td>
                   <td className="max-w-xs px-4 py-3 text-muted">{row.studies || "Not given"}</td>
-                  <td className="px-4 py-3">{row.hasCv ? "Saved" : "No"}</td>
+                  <td className="px-4 py-3">
+                    {row.hasCv ? (
+                      <span className="flex flex-wrap gap-x-3 gap-y-1">
+                        <Link href={`/admin/alerts/${row.id}`} className="font-semibold text-forest underline-offset-4 hover:underline">
+                          View
+                        </Link>
+                        <a
+                          href={`/admin/alerts/${row.id}/cv`}
+                          className="font-semibold text-forest underline-offset-4 hover:underline"
+                        >
+                          Download
+                        </a>
+                      </span>
+                    ) : (
+                      "No"
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-muted">{formatPosted(row.createdAt)}</td>
                   <td className="px-4 py-3 text-right">
                     <form action={removeSubscriber}>
