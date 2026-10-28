@@ -35,7 +35,7 @@ export default async function SignupCvPage({ params }: { params: Promise<{ id: s
       </p>
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <h2 className="text-lg font-extrabold">CV</h2>
-        {person.cvText ? (
+        {person.hasFile || person.cvText ? (
           <a
             href={`/admin/alerts/${person.id}/cv`}
             className="inline-flex h-11 items-center rounded-lg bg-forest px-4 text-sm font-semibold text-card hover:bg-forest-deep"
@@ -44,10 +44,21 @@ export default async function SignupCvPage({ params }: { params: Promise<{ id: s
           </a>
         ) : null}
       </div>
-      {person.cvText ? (
-        <pre className="mt-3 max-w-3xl overflow-x-auto whitespace-pre-wrap rounded-2xl border border-line bg-card p-5 text-sm leading-6 text-ink">
-          {person.cvText}
-        </pre>
+      {person.hasFile && (person.cvType === "application/pdf" || person.cvName.toLowerCase().endsWith(".pdf")) ? (
+        <iframe
+          title={`${person.name} CV`}
+          src={`/admin/alerts/${person.id}/cv?view=1`}
+          className="mt-3 h-[70vh] w-full max-w-3xl rounded-2xl border border-line bg-card"
+        />
+      ) : person.cvText ? (
+        <div className="mt-3 max-w-3xl">
+          {person.hasFile ? null : (
+            <p className="mb-3 text-sm text-muted">This CV was pasted as text, so the download is that text.</p>
+          )}
+          <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-line bg-card p-5 text-sm leading-6 text-ink">
+            {person.cvText}
+          </pre>
+        </div>
       ) : (
         <p className="mt-3 rounded-2xl border border-dashed border-line bg-card px-5 py-10 text-sm text-muted">
           This person did not submit a CV.

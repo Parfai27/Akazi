@@ -169,7 +169,78 @@ export async function rememberSubscriber(row: KeptSubscriber) {
 
 export async function forgetSubscriber(email: string) {
   await forgetRecord("subscriber", email);
+  await forgetCv(email);
   invalidateStudyRecords();
+}
+
+export type StoredCv = { name: string; type: string; bytes: Buffer };
+
+function readLocalCv(email: string): StoredCv | null {
+  const row = sqlite()
+    .prepare("SELECT cv_name AS name, cv_type AS type, cv_file AS bytes FROM subscribers WHERE email = ?")
+    .get(email) as { name: string; type: string; bytes: Buffer | null } | undefined;
+  if (!row?.bytes || row.bytes.length === 0) return null;
+  return { name: row.name || "cv", type: row.type || "application/octet-stream", bytes: row.bytes };
+}
+
+function writeLocalCv(email: string, file: StoredCv) {
+  sqlite()
+    .prepare("UPDATE subscribers SET cv_name = ?, cv_type = ?, cv_file = ? WHERE email = ?")
+    .run(file.name, file.type, file.bytes, email);
+}
+
+/** Keep the uploaded CV where it survives a restart. The reply must name the stored file, not a mail send. */
+export async function rememberCv(email: string, file: { name: string; type: string; bytes: Uint8Array }) {
+  if (!email) return false;
+  if (!hookReady()) return process.env.RENDER !== "true";
+  try {
+    const reply = await postHook(
+      {
+        kind: "cv",
+        email,
+        filename: file.name,
+        mime: file.type,
+        data: Buffer.from(file.bytes).toString("base64"),
+      },
+      45_000,
+    );
+    return reply.includes("stored");
+  } catch {
+    return false;
+  }
+}
+
+async function forgetCv(email: string) {
+  if (!hookReady() || !email) return;
+  try {
+    await postHook({ kind: "cv-forget", email }, 12_000);
+  } catch {
+    // The signup row is already removed. A later upload replaces the file.
+  }
+}
+
+async function loadRemoteCv(email: string): Promise<StoredCv | null> {
+  if (!hookReady()) return null;
+  try {
+    const reply = await postHook({ kind: "cv-read", email }, 45_000);
+    const lines = reply.split("\n");
+    if (lines[1] !== "stored" || lines.length < 5) return null;
+    const bytes = Buffer.from(lines.slice(4).join("\n"), "base64");
+    if (bytes.length === 0) return null;
+    return { name: lines[2] || "cv", type: lines[3] || "application/octet-stream", bytes };
+  } catch {
+    return null;
+  }
+}
+
+/** The original uploaded CV, from this server or the lasting copy. */
+export async function signupCv(email: string): Promise<StoredCv | null> {
+  const local = readLocalCv(email);
+  if (local) return local;
+  const remote = await loadRemoteCv(email);
+  if (!remote) return null;
+  writeLocalCv(email, remote);
+  return remote;
 }
 
 export async function rememberMail(row: KeptMail) {

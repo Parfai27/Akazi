@@ -2,7 +2,7 @@ import { io } from "next/cache";
 import { connection } from "next/server";
 import { sqlite } from "@/db";
 import { functionLabel, jobFunction } from "@/lib/organize";
-import { jobViewerCount, loadKeptMail, restoreStudyRecords, type KeptMail } from "@/lib/record-log";
+import { jobViewerCount, loadKeptMail, restoreStudyRecords, signupCv, type KeptMail } from "@/lib/record-log";
 import { loadRememberedVisits, mergeVisits } from "@/lib/visit-log";
 
 export type OpeningRow = {
@@ -112,17 +112,17 @@ export async function listSignups(): Promise<AlertRow[]> {
   await restoreStudyRecords();
   const rows = sqlite()
     .prepare(
-      `SELECT id, name, email, studies, created_at AS createdAt, length(cv_text) AS cvLength
+      `SELECT id, name, email, studies, created_at AS createdAt, length(cv_text) AS cvLength, length(cv_file) AS fileLength
        FROM subscribers
        ORDER BY created_at DESC`,
     )
-    .all() as { id: number; name: string; email: string; studies: string; createdAt: string; cvLength: number }[];
+    .all() as { id: number; name: string; email: string; studies: string; createdAt: string; cvLength: number; fileLength: number | null }[];
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     email: row.email,
     studies: row.studies,
-    hasCv: row.cvLength > 40,
+    hasCv: row.cvLength > 40 || Number(row.fileLength) > 0,
     createdAt: row.createdAt,
   }));
 }
@@ -144,7 +144,14 @@ export async function getSignup(id: number) {
     .get(id) as
     | { id: number; name: string; email: string; studies: string; cvText: string; createdAt: string }
     | undefined;
-  return row ?? null;
+  if (!row) return null;
+  const file = await signupCv(row.email);
+  return {
+    ...row,
+    hasFile: Boolean(file),
+    cvName: file?.name ?? "",
+    cvType: file?.type ?? "",
+  };
 }
 
 export async function getSourceRows(): Promise<SourceRow[]> {

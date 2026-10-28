@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { extractText } from "unpdf";
-import { db } from "@/db";
+import { db, sqlite } from "@/db";
 import { subscribers } from "@/db/schema";
 import { mailConfigured, matchSubscriber } from "@/lib/alerts";
-import { rememberSubscriber } from "@/lib/record-log";
+import { rememberCv, rememberSubscriber } from "@/lib/record-log";
 
 export type AlertState = {
   error?: string;
@@ -17,6 +17,12 @@ export type AlertState = {
   mailReady?: boolean;
 };
 
+function cvFileName(name: string, extension: string) {
+  const cleaned = name.replace(/[/\\?%*:|"<>\r\n]/g, "").trim().slice(0, 80);
+  const base = cleaned || "cv";
+  return base.toLowerCase().endsWith(`.${extension}`) ? base : `${base}.${extension}`;
+}
+
 async function readCv(formData: FormData, pasted: string) {
   const file = formData.get("cvFile");
   if (!(file instanceof File) || file.size === 0) return { text: pasted };
@@ -24,7 +30,10 @@ async function readCv(formData: FormData, pasted: string) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const name = file.name.toLowerCase();
   if (name.endsWith(".txt") || file.type.startsWith("text/")) {
-    return { text: `${pasted}\n${new TextDecoder().decode(bytes)}`.trim() };
+    return {
+      text: `${pasted}\n${new TextDecoder().decode(bytes)}`.trim(),
+      file: { name: cvFileName(file.name, "txt"), type: "text/plain", bytes },
+    };
   }
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
     try {
@@ -34,7 +43,10 @@ async function readCv(formData: FormData, pasted: string) {
       if (pdfText.length < 20) {
         return { text: pasted, error: "That PDF had no readable text. Paste your CV instead." };
       }
-      return { text: `${pasted}\n${pdfText}`.trim() };
+      return {
+        text: `${pasted}\n${pdfText}`.trim(),
+        file: { name: cvFileName(file.name, "pdf"), type: "application/pdf", bytes },
+      };
     } catch {
       return { text: pasted, error: "That PDF could not be read. Paste your CV instead." };
     }
@@ -54,7 +66,7 @@ export async function subscribe(_prev: AlertState, formData: FormData): Promise<
   if (!consent) return { error: "Tick the box to agree to email alerts." };
 
   const cv = await readCv(formData, pasted);
-  if (cv.error && cv.text.trim().length < 40 && studies.length < 3) return { error: cv.error };
+  if (cv.error) return { error: cv.error };
   const cvText = cv.text.trim().slice(0, 20000);
   if (studies.length < 3 && cvText.length < 40) {
     return { error: "Add what you studied, or paste your CV, so matches have something to compare." };
@@ -76,9 +88,17 @@ export async function subscribe(_prev: AlertState, formData: FormData): Promise<
     subscriberId = Number(inserted.lastInsertRowid);
   }
 
+  if (cv.file) {
+    sqlite()
+      .prepare("UPDATE subscribers SET cv_name = ?, cv_type = ?, cv_file = ? WHERE id = ?")
+      .run(cv.file.name, cv.file.type, Buffer.from(cv.file.bytes), subscriberId);
+  }
   const stored = db.select().from(subscribers).where(eq(subscribers.id, subscriberId!)).get();
   if (!stored || !(await rememberSubscriber(stored))) {
     return { error: "Your details could not be saved. Please try again." };
+  }
+  if (cv.file && !(await rememberCv(stored.email, cv.file))) {
+    return { error: "Your CV could not be saved. Please try again." };
   }
   revalidatePath("/admin");
   revalidatePath("/admin/alerts");

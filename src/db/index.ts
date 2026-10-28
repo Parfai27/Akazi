@@ -57,6 +57,9 @@ function openDatabase() {
       email TEXT NOT NULL UNIQUE,
       studies TEXT NOT NULL DEFAULT '',
       cv_text TEXT NOT NULL DEFAULT '',
+      cv_name TEXT NOT NULL DEFAULT '',
+      cv_type TEXT NOT NULL DEFAULT '',
+      cv_file BLOB,
       consent_at TEXT NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -112,6 +115,16 @@ function openDatabase() {
   const assign = sqlite.prepare("UPDATE jobs SET public_id = ? WHERE id = ?");
   for (const row of missing) assign.run(jobKey(row.sourceId, row.externalId), row.id);
   sqlite.exec("CREATE UNIQUE INDEX IF NOT EXISTS jobs_public_id ON jobs (public_id)");
+  const subscriberColumns = sqlite.prepare("PRAGMA table_info(subscribers)").all() as { name: string }[];
+  if (!subscriberColumns.some((column) => column.name === "cv_name")) {
+    sqlite.exec("ALTER TABLE subscribers ADD COLUMN cv_name TEXT NOT NULL DEFAULT ''");
+  }
+  if (!subscriberColumns.some((column) => column.name === "cv_type")) {
+    sqlite.exec("ALTER TABLE subscribers ADD COLUMN cv_type TEXT NOT NULL DEFAULT ''");
+  }
+  if (!subscriberColumns.some((column) => column.name === "cv_file")) {
+    sqlite.exec("ALTER TABLE subscribers ADD COLUMN cv_file BLOB");
+  }
   return sqlite;
 }
 
