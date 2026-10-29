@@ -1,4 +1,5 @@
 import { connection, NextResponse } from "next/server";
+import { alertsReportPdf } from "@/lib/alerts-report-pdf";
 import { isAdmin } from "@/lib/admin-auth";
 import { getAlertRows, getOpeningRows } from "@/lib/staff-directory";
 
@@ -16,14 +17,12 @@ export async function GET(request: Request) {
   const kind = new URL(request.url).searchParams.get("kind");
   if (kind === "alerts") {
     const rows = await getAlertRows();
-    const body = csv([
-      ["Name", "Email", "Studies", "CV saved", "Signed up"],
-      ...rows.map((row) => [row.name, row.email, row.studies, row.hasCv ? "yes" : "no", row.createdAt]),
-    ]);
-    return new NextResponse(body, {
+    const pdf = await alertsReportPdf(rows);
+    return new NextResponse(Buffer.from(pdf), {
       headers: {
-        "content-type": "text/csv; charset=utf-8",
-        "content-disposition": 'attachment; filename="akazi-alerts.csv"',
+        "content-type": "application/pdf",
+        "content-disposition": 'attachment; filename="akazi-alerts.pdf"',
+        "cache-control": "private, no-store",
       },
     });
   }

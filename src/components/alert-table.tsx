@@ -27,7 +27,7 @@ export function AlertTable({ rows }: { rows: AlertRow[] }) {
           />
         </label>
         <a href="/admin/export?kind=alerts" className="inline-flex h-11 items-center rounded-lg border border-line bg-card px-4 text-sm font-semibold hover:border-forest hover:text-forest">
-          Download CSV
+          Download PDF
         </a>
       </div>
       <p className="mt-3 text-sm text-muted">
