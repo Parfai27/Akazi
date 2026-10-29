@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/openings", label: "Openings" },
   { href: "/admin/alerts", label: "Alerts" },
   { href: "/admin/mail", label: "Mail" },
+  { href: "/admin/report", label: "Report" },
   { href: "/admin/sources", label: "Sources" },
 ];
 
@@ -39,8 +40,8 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-wash lg:pl-64">
-      <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 flex-col bg-ink px-4 py-6 text-card lg:flex`}>
+    <div className="min-h-screen bg-wash lg:pl-64 print:!bg-white print:!pl-0">
+      <aside className={`staff-chrome ${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 flex-col bg-ink px-4 py-6 text-card lg:flex`}>
         <Link href="/admin" className="px-2 text-card" onClick={() => setOpen(false)}>
           <Logo compact />
         </Link>
@@ -55,9 +56,9 @@ export function StaffShell({ children }: { children: ReactNode }) {
         </form>
       </aside>
       {open ? (
-        <button type="button" aria-label="Close menu" className="fixed inset-0 z-30 bg-ink/40 lg:hidden" onClick={() => setOpen(false)} />
+        <button type="button" aria-label="Close menu" className="staff-chrome fixed inset-0 z-30 bg-ink/40 lg:hidden" onClick={() => setOpen(false)} />
       ) : null}
-      <div className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-card px-4 lg:hidden">
+      <div className="staff-chrome sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-card px-4 lg:hidden">
         <button
           type="button"
           aria-label="Open menu"
