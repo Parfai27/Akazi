@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AlertForm } from "@/components/alert-form";
 import { ArrowLeftIcon, BellIcon } from "@/components/icons";
+import { pageMeta } from "@/lib/site";
 
-export const metadata = {
+export const metadata = pageMeta({
   title: "Email alerts",
   description: "Get an email when a Rwanda job opening matches your studies or CV.",
-};
+  path: "/alerts",
+});
 
 export default function AlertsPage() {
   return (

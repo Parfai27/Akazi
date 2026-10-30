@@ -10,7 +10,7 @@ export function ViewerCount({ initial, publicId }: { initial: number; publicId: 
 
   useEffect(() => {
     const saved = latestViewers(path);
-    if (typeof saved === "number") setCount(saved);
+    if (typeof saved === "number") queueMicrotask(() => setCount(saved));
     const onCount = (event: Event) => {
       const detail = (event as CustomEvent<{ path?: string; viewers?: number }>).detail;
       if (detail?.path === path && typeof detail.viewers === "number") setCount(detail.viewers);
