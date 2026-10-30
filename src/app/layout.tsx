@@ -7,7 +7,14 @@ import { Logo } from "@/components/logo";
 import { SiteFrame } from "@/components/site-frame";
 import { SiteHeader } from "@/components/site-header";
 import { adConfig } from "@/lib/ads";
-import { CANONICAL_ORIGIN, CONTACT_EMAIL, SITE_DESCRIPTION } from "@/lib/site";
+import {
+  CANONICAL_ORIGIN,
+  CONTACT_EMAIL,
+  INSTAGRAM_URL,
+  SITE_DESCRIPTION,
+  WHATSAPP_CHANNEL_URL,
+  WHATSAPP_GROUP_URL,
+} from "@/lib/site";
 import "./globals.css";
 
 const FOOTER_LINK = "text-sm font-semibold text-card/90 underline-offset-4 hover:text-card hover:underline";
@@ -83,7 +90,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     </a>
                     <div className="mt-4 flex w-max max-w-full flex-wrap gap-2">
                       <a
-                        href="https://www.instagram.com/akazi.co.rw"
+                        href={INSTAGRAM_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
@@ -92,7 +99,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                         Instagram
                       </a>
                       <a
-                        href="https://whatsapp.com/channel/0029Vb9t2xE0gcfH3qfJ1J1l"
+                        href={WHATSAPP_CHANNEL_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
@@ -101,7 +108,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                         Channel
                       </a>
                       <a
-                        href="https://chat.whatsapp.com/BMueuqlvheH7QtE63Bjo74"
+                        href={WHATSAPP_GROUP_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"

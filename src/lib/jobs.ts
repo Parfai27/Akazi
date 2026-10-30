@@ -137,6 +137,34 @@ function toCard(job: JobRecord): BoardCard {
   };
 }
 
+export type PublicStats = {
+  openings: number;
+  kigali: number;
+  country: number;
+  remote: number;
+  employers: number;
+};
+
+export async function getPublicStats(): Promise<PublicStats> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("jobs");
+  const open = listedOpenJobs();
+  const counts = { kigali: 0, country: 0, remote: 0 };
+  const companies = new Set<string>();
+  for (const job of open) {
+    counts[shelfOf(job)] += 1;
+    if (job.company) companies.add(job.company);
+  }
+  return {
+    openings: open.length,
+    kigali: counts.kigali,
+    country: counts.country,
+    remote: counts.remote,
+    employers: companies.size,
+  };
+}
+
 export async function getBoard(input: Partial<JobFilters>): Promise<BoardModel> {
   return readBoard(normalizeFilters(input));
 }
