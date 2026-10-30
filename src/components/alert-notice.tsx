@@ -51,7 +51,7 @@ export function AlertNotice() {
     <div
       role="dialog"
       aria-labelledby="alert-notice-title"
-      className="akazi-alert-pop fixed top-[8.75rem] right-3 z-50 w-56 md:top-[5.25rem] md:right-8 md:w-72"
+      className="akazi-alert-pop fixed top-[5.25rem] right-3 z-50 w-56 md:right-8 md:w-72"
     >
       <div className="relative rounded-[1.4rem] bg-forest px-4 pt-3 pb-3.5 text-card shadow-[0_16px_32px_rgba(30,107,88,0.35)]">
         <span aria-hidden="true" className="absolute -top-1.5 right-8 size-3.5 rotate-45 rounded-sm bg-forest md:right-10" />

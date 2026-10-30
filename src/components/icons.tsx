@@ -1,6 +1,6 @@
-export function SearchIcon() {
+export function SearchIcon({ className = "size-4 shrink-0" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="11" cy="11" r="6" />
       <path d="m20 20-3.5-3.5" strokeLinecap="round" />
     </svg>
@@ -12,6 +12,22 @@ export function BellIcon() {
     <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" strokeLinejoin="round" />
       <path d="M9.5 17a2.5 2.5 0 0 0 5 0" />
+    </svg>
+  );
+}
+
+export function MenuIcon({ className = "size-5 shrink-0" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function CloseIcon({ className = "size-5 shrink-0" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
     </svg>
   );
 }
