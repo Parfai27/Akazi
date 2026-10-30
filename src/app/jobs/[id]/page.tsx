@@ -59,7 +59,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
 
   return (
     <article>
-      <div className="sticky top-[8rem] z-20 bg-card md:top-[4.5rem]">
+      <div className="sticky top-[4.5rem] z-20 bg-card">
         <div className="flex w-full items-center px-4 py-1 sm:px-8">
           <Link
             href="/"

@@ -70,10 +70,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </head>
       ) : null}
       <body className="flex min-h-full flex-col text-ink">
-        <Suspense fallback={<div className="h-[8.25rem] border-b border-line bg-card md:h-[4.5rem]" />}>
+        <Suspense fallback={<div className="h-[4.5rem] border-b border-line bg-card/85" />}>
           <SiteFrame
             header={
-              <Suspense fallback={<div className="h-[8.25rem] border-b border-line bg-card md:h-[4.5rem]" />}>
+              <Suspense fallback={<div className="h-[4.5rem] border-b border-line bg-card/85" />}>
                 <SiteHeader />
               </Suspense>
             }
