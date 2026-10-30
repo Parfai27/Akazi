@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { SiteFrame } from "@/components/site-frame";
 import { SiteHeader } from "@/components/site-header";
 import { adConfig } from "@/lib/ads";
+import { CANONICAL_ORIGIN, CONTACT_EMAIL, SITE_DESCRIPTION } from "@/lib/site";
 import "./globals.css";
 
 const outfit = Plus_Jakarta_Sans({
@@ -15,14 +16,18 @@ const outfit = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, ""),
-  ),
+  metadataBase: new URL(CANONICAL_ORIGIN),
   title: {
     default: "Akazi — jobs in Rwanda",
     template: "%s · Akazi",
   },
-  description: "Job openings in Rwanda.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: "Akazi",
+    type: "website",
+    url: "/",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -54,6 +59,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <p className="mt-3 max-w-xs text-sm leading-6 text-card/75">
                       Our vision is a Rwanda where everyone can reach the work that fits them.
                     </p>
+                    <a className="mt-3 inline-block text-sm font-semibold text-card underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
+                      {CONTACT_EMAIL}
+                    </a>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <a
                         href="https://www.instagram.com/akazi.co.rw"
@@ -97,11 +105,23 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <Link href="/?shelf=remote" className="hover:text-card/70">
                       Remote
                     </Link>
+                    <Link href="/guides" className="hover:text-card/70">
+                      Guides
+                    </Link>
                     <Link href="/alerts" className="hover:text-card/70">
                       Alerts
                     </Link>
+                    <Link href="/about" className="hover:text-card/70">
+                      About
+                    </Link>
+                    <Link href="/contact" className="hover:text-card/70">
+                      Contact
+                    </Link>
                     <Link href="/privacy" className="hover:text-card/70">
                       Privacy
+                    </Link>
+                    <Link href="/terms" className="hover:text-card/70">
+                      Terms
                     </Link>
                   </nav>
                 </div>

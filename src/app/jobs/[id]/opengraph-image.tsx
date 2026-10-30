@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { connection } from "next/server";
 import { companyLogo, employerIcon } from "@/lib/company-logos";
 import { getJob } from "@/lib/jobs";
 
@@ -37,6 +38,7 @@ async function logoData(src: string) {
 }
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  await connection();
   const { id } = await params;
   const job = await getJob(id);
   const company = job?.company ?? "Akazi";
@@ -70,7 +72,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           }}
         >
           {src ? (
-            <img src={src} width={cover ? 440 : 340} height={cover ? 440 : 340} />
+            <img alt="" src={src} width={cover ? 440 : 340} height={cover ? 440 : 340} />
           ) : (
             <div style={{ fontSize: 200, fontWeight: 700, color: "#ffffff" }}>{letter}</div>
           )}

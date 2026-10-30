@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/icons";
+import { CONTACT_EMAIL, pageMeta } from "@/lib/site";
 
-export const metadata = {
+export const metadata = pageMeta({
   title: "Privacy",
   description: "What Akazi stores, and how advertising works on the site.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
@@ -23,6 +25,13 @@ export default function PrivacyPage() {
           <p>
             A random cookie counts visits for the staff dashboard. It is not your name or email. Opening a job adds
             to the number of people who viewed that role. That number is not your name.
+          </p>
+          <p>
+            To ask about this data, or to stop email alerts, write to{" "}
+            <a className="font-medium text-forest underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
+              {CONTACT_EMAIL}
+            </a>
+            .
           </p>
           <p>
             Some pages show advertisements from Google. Google may use a cookie to choose and measure those ads. You can

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { BellIcon, SearchIcon, StaffIcon } from "@/components/icons";
+import { BellIcon, SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
 
 export function SiteHeader() {
@@ -79,14 +79,6 @@ export function SiteHeader() {
           >
             <BellIcon />
             <span className="hidden sm:inline">Alerts</span>
-          </Link>
-          <Link
-            href="/admin"
-            aria-label="Staff"
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-forest px-4 text-sm font-semibold text-card hover:bg-forest-deep"
-          >
-            <StaffIcon />
-            Staff
           </Link>
         </nav>
       </div>

@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
 
 export function JobShare({ title, company }: { title: string; company: string }) {
-  const [pageUrl, setPageUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [instagramCopied, setInstagramCopied] = useState(false);
 
-  useEffect(() => {
-    setPageUrl(window.location.href);
-  }, []);
-
   const message = `${title} at ${company}`;
-  const whatsapp = pageUrl ? `https://wa.me/?text=${encodeURIComponent(`${message}\n${pageUrl}`)}` : undefined;
+
+  function shareWhatsApp() {
+    const text = `${message}\n${window.location.href}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  }
 
   async function shareInstagram() {
     const url = window.location.href;
@@ -42,15 +41,14 @@ export function JobShare({ title, company }: { title: string; company: string })
     <div className="mt-5 border-t border-line pt-4">
       <h3 className="text-sm font-extrabold">Share</h3>
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <a
-          href={whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={shareWhatsApp}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 text-sm font-semibold text-white hover:brightness-95"
         >
           <WhatsAppIcon />
           WhatsApp
-        </a>
+        </button>
         <button
           type="button"
           onClick={shareInstagram}

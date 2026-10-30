@@ -21,7 +21,7 @@ export function AlertNotice() {
 
   useEffect(() => {
     if (path.startsWith("/alerts")) {
-      setOpen(false);
+      queueMicrotask(() => setOpen(false));
       return;
     }
     if (window.localStorage.getItem(SEEN)) return;
@@ -32,7 +32,7 @@ export function AlertNotice() {
     }
     if (entry === here) return;
     window.localStorage.setItem(SEEN, "1");
-    setOpen(true);
+    queueMicrotask(() => setOpen(true));
   }, [here, path]);
 
   useEffect(() => {

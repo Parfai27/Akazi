@@ -16,15 +16,6 @@ export function BellIcon() {
   );
 }
 
-export function StaffIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="8" r="3" />
-      <path d="M5 19c1.4-2.8 3.8-4 7-4s5.6 1.2 7 4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function ArrowLeftIcon({ className = "size-5" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={`${className} shrink-0`} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">

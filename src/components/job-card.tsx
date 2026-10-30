@@ -1,14 +1,11 @@
 import Link from "next/link";
 import type { JobRecord } from "@/db/schema";
 import { CompanyMark } from "@/components/company-mark";
-import { deadlineKind, functionLabel, jobFunction } from "@/lib/organize";
+import { functionLabel, jobFunction } from "@/lib/organize";
 import { workModeLabel } from "@/lib/tag";
 import { jobPath } from "@/lib/job-key";
-import { deadlineShort } from "@/lib/url";
 
-export function JobCard({ job }: { job: JobRecord }) {
-  const kind = deadlineKind(job.deadlineAt);
-  const closes = deadlineShort(job.deadlineAt);
+export function JobCard({ job, closes, soon }: { job: JobRecord; closes: string | null; soon: boolean }) {
 
   return (
     <li className="h-full">
@@ -28,7 +25,7 @@ export function JobCard({ job }: { job: JobRecord }) {
           <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{workModeLabel(job.workMode)}</span>
           <span className="rounded-md bg-amber px-2.5 py-1 text-clay">{functionLabel(jobFunction(job.title))}</span>
           {closes ? (
-            <span className={kind === "soon" ? "text-clay" : "text-muted"}>{closes}</span>
+            <span className={soon ? "text-clay" : "text-muted"}>{closes}</span>
           ) : null}
         </div>
       </Link>
