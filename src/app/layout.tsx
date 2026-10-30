@@ -10,6 +10,25 @@ import { adConfig } from "@/lib/ads";
 import { CANONICAL_ORIGIN, CONTACT_EMAIL, SITE_DESCRIPTION } from "@/lib/site";
 import "./globals.css";
 
+const FOOTER_LINK = "text-sm font-semibold text-card/90 underline-offset-4 hover:text-card hover:underline";
+
+function FooterColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+  return (
+    <nav aria-label={title}>
+      <h2 className="text-xs font-semibold tracking-[0.14em] text-card/45 uppercase">{title}</h2>
+      <ul className="mt-4 space-y-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className={FOOTER_LINK}>
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 const outfit = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-outfit",
@@ -53,8 +72,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             }
             footer={
               <footer className="mt-auto bg-ink text-card">
-                <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-                  <div className="max-w-sm">
+                <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 pt-10 pb-8 sm:px-6 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-16 lg:pt-12">
+                  <div>
                     <Logo compact />
                     <p className="mt-3 max-w-xs text-sm leading-6 text-card/75">
                       Our vision is a Rwanda where everyone can reach the work that fits them.
@@ -62,7 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <a className="mt-3 inline-block text-sm font-semibold text-card underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
                       {CONTACT_EMAIL}
                     </a>
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-4 flex w-max max-w-full flex-wrap gap-2">
                       <a
                         href="https://www.instagram.com/akazi.co.rw"
                         target="_blank"
@@ -92,40 +111,38 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                       </a>
                     </div>
                   </div>
-                  <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold" aria-label="Footer">
-                    <Link href="/" className="hover:text-card/70">
-                      Openings
-                    </Link>
-                    <Link href="/?shelf=kigali" className="hover:text-card/70">
-                      Kigali
-                    </Link>
-                    <Link href="/?shelf=country" className="hover:text-card/70">
-                      Elsewhere
-                    </Link>
-                    <Link href="/?shelf=remote" className="hover:text-card/70">
-                      Remote
-                    </Link>
-                    <Link href="/guides" className="hover:text-card/70">
-                      Guides
-                    </Link>
-                    <Link href="/alerts" className="hover:text-card/70">
-                      Alerts
-                    </Link>
-                    <Link href="/about" className="hover:text-card/70">
-                      About
-                    </Link>
-                    <Link href="/contact" className="hover:text-card/70">
-                      Contact
-                    </Link>
-                    <Link href="/privacy" className="hover:text-card/70">
-                      Privacy
-                    </Link>
-                    <Link href="/terms" className="hover:text-card/70">
-                      Terms
-                    </Link>
-                  </nav>
+                  <div className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3 sm:gap-x-10">
+                    <FooterColumn
+                      title="Jobs"
+                      links={[
+                        { href: "/", label: "Openings" },
+                        { href: "/?shelf=kigali", label: "Kigali" },
+                        { href: "/?shelf=country", label: "Elsewhere" },
+                        { href: "/?shelf=remote", label: "Remote" },
+                        { href: "/alerts", label: "Alerts" },
+                      ]}
+                    />
+                    <FooterColumn
+                      title="Resources"
+                      links={[
+                        { href: "/guides", label: "Guides" },
+                        { href: "/guides/writing-a-cv-for-rwanda", label: "Writing a CV" },
+                        { href: "/guides/preparing-for-interviews", label: "Interviews" },
+                        { href: "/guides/remote-work-from-rwanda", label: "Remote work" },
+                      ]}
+                    />
+                    <FooterColumn
+                      title="Company"
+                      links={[
+                        { href: "/about", label: "About" },
+                        { href: "/contact", label: "Contact" },
+                        { href: "/privacy", label: "Privacy" },
+                        { href: "/terms", label: "Terms" },
+                      ]}
+                    />
+                  </div>
                 </div>
-                <p className="mx-auto w-full max-w-6xl border-t border-card/15 px-4 py-4 text-xs text-card/60 sm:px-6">
+                <p className="mx-auto w-full max-w-6xl border-t border-card/15 px-4 pt-4 pb-20 text-xs text-card/60 sm:px-6 sm:pb-6 lg:pr-44">
                   © 2026 Akazi
                 </p>
               </footer>
