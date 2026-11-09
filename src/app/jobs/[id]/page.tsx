@@ -8,7 +8,7 @@ import { JobCard } from "@/components/job-card";
 import { JobDescription } from "@/components/job-description";
 import { JobShare } from "@/components/job-share";
 import { JobViewers } from "@/components/job-viewers";
-import { ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
+import { AlertCircleIcon, ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
 import { adConfig } from "@/lib/ads";
 import { EMPTY_JOB_ID, getJobPage, listSitemapJobs } from "@/lib/jobs";
 import { functionLabel, jobFunction } from "@/lib/organize";
@@ -76,7 +76,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
           <div className="flex min-w-0 items-start gap-4">
             <CompanyMark name={job.company} website={job.applyUrl} size="lg" />
             <div className="min-w-0">
-              <h1 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">{job.title}</h1>
+              <h1 className="text-2xl font-extrabold tracking-tight break-words text-ink sm:text-3xl">{job.title}</h1>
               <p className="mt-1 text-sm font-semibold text-forest">{job.company}</p>
             </div>
           </div>
@@ -97,8 +97,9 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
           </div>
 
           {!job.isActive ? (
-            <p className="mt-6 rounded-xl border border-clay/30 bg-amber px-4 py-3 text-sm text-clay-deep">
-              This role is no longer listed.
+            <p className="mt-6 flex items-center gap-2 rounded-xl border border-clay/30 bg-amber px-4 py-3 text-sm text-clay-deep">
+              <AlertCircleIcon />
+              This role is no longer listed, so the employer may have closed applications.
             </p>
           ) : null}
 
@@ -166,6 +167,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
               >
                 Apply
                 <ExternalIcon />
+                <span className="sr-only">(opens in a new tab)</span>
               </a>
             ) : null}
           </section>
@@ -190,8 +192,15 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
 
           {data.sourceHref ? (
             <p className="mt-10 border-t border-line pt-4 text-sm leading-6">
-              <a className="font-medium text-forest underline-offset-4 hover:underline" href={data.sourceHref} target="_blank" rel="noopener noreferrer">
+              <a
+                className="inline-flex items-center gap-1.5 font-medium text-forest underline-offset-4 hover:underline"
+                href={data.sourceHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 View the original posting
+                <ExternalIcon />
+                <span className="sr-only">(opens in a new tab)</span>
               </a>
             </p>
           ) : null}
@@ -242,6 +251,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             >
               Apply
               <ExternalIcon />
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           ) : null}
           <JobShare title={job.title} company={job.company} />

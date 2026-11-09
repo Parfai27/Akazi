@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BellIcon } from "@/components/icons";
+import { BellIcon, CloseIcon } from "@/components/icons";
 
 const SEEN = "akazi-alert-note";
 const ENTRY = "akazi-alert-entry";
@@ -58,11 +58,11 @@ export function AlertNotice() {
         <button
           ref={closeRef}
           type="button"
-          aria-label="Close"
+          aria-label="Close alert tip"
           onClick={() => setOpen(false)}
-          className="absolute top-1.5 right-1.5 inline-flex size-8 items-center justify-center rounded-full text-lg leading-none text-card/80 hover:bg-card/15 hover:text-card"
+          className="absolute top-1 right-1 inline-flex size-9 items-center justify-center rounded-full text-card/80 hover:bg-card/15 hover:text-card focus-visible:outline-card"
         >
-          ×
+          <CloseIcon className="size-4 shrink-0" />
         </button>
         <p id="alert-notice-title" className="pr-6 text-sm leading-6">
           <span className="akazi-alert-bell mr-1 inline-block align-middle">
@@ -74,7 +74,7 @@ export function AlertNotice() {
         <Link
           href="/alerts"
           onClick={() => setOpen(false)}
-          className="mt-2 inline-flex font-extrabold underline decoration-2 underline-offset-4 hover:text-amber"
+          className="mt-2 inline-flex font-extrabold underline decoration-2 underline-offset-4 hover:text-amber focus-visible:outline-card"
         >
           Set up alerts
         </Link>

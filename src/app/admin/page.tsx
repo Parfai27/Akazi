@@ -70,7 +70,7 @@ async function AdminPanel({ searchParams }: { searchParams: Promise<Search> }) {
               type="password"
               required
               autoComplete="current-password"
-              className="h-11 w-full rounded-lg border border-line bg-card px-3 text-base outline-none focus:border-forest"
+              className="h-11 w-full rounded-lg border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
             />
           </label>
           {failed ? <p className="mt-3 text-sm text-clay-deep">That password did not match.</p> : null}

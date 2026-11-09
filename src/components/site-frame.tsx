@@ -20,8 +20,16 @@ export function SiteFrame({
 
   return (
     <>
+      <a
+        href="#content"
+        className="fixed top-3 left-3 z-50 -translate-y-20 rounded-lg bg-forest px-4 py-3 text-sm font-semibold text-card focus-visible:translate-y-0"
+      >
+        Skip to content
+      </a>
       {header}
-      <div className="flex-1">{children}</div>
+      <div id="content" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </div>
       {footer}
       <AlertNotice />
       <ChatWidget />

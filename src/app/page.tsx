@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AdSlot } from "@/components/ad-slot";
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
 import { adConfig } from "@/lib/ads";
 import { boardPath, firstPageFilters, getBoard, normalizeFilters, type BoardModel, type JobFilters } from "@/lib/jobs";
@@ -60,7 +61,9 @@ function BoardMarkup({ model }: { model: BoardModel }) {
 
   return (
     <div className="bg-wash pb-16">
-      {filters.q ? null : (
+      {filters.q ? (
+        <h1 className="sr-only">Openings matching “{filters.q}”</h1>
+      ) : (
         <section className="bg-card">
           <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-6 sm:px-6 sm:pt-16 sm:pb-8">
             <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-6xl sm:leading-[1.05]">
@@ -87,11 +90,12 @@ function BoardMarkup({ model }: { model: BoardModel }) {
               <Link
                 key={shelf.id}
                 href={boardPath({ ...filters, shelf: selected ? "" : shelf.id, page: 1 })}
+                aria-current={selected ? "true" : undefined}
                 className={`rounded-2xl border px-5 py-5 ${
                   selected ? "border-forest bg-forest text-card" : "border-line bg-card text-ink hover:border-forest"
                 }`}
               >
-                <span className="block text-3xl font-extrabold leading-none tracking-tight">{count}</span>
+                <span className="block text-3xl font-extrabold leading-none tracking-tight tabular-nums">{count}</span>
                 <span className="mt-2 block text-sm font-semibold">{shelf.label}</span>
                 <span className={`mt-1 block text-xs ${selected ? "text-card/80" : "text-muted"}`}>{shelf.hint}</span>
               </Link>
@@ -130,7 +134,8 @@ function BoardMarkup({ model }: { model: BoardModel }) {
             <>
               {" "}
               ·{" "}
-              <Link className="font-medium text-forest underline-offset-4 hover:underline" href="/">
+              <Link className="inline-flex items-center gap-1 font-medium text-forest underline-offset-4 hover:underline" href="/">
+                <CloseIcon className="size-3.5 shrink-0" />
                 Clear filters
               </Link>
             </>
@@ -166,7 +171,13 @@ function BoardMarkup({ model }: { model: BoardModel }) {
                 ) : null}
                 <ul className={`${showClosing ? "mt-5" : "mt-4"} grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
                   {model.cards.map((card) => (
-                    <JobCard key={card.job.id} job={card.job} closes={card.closes} soon={card.soon} />
+                    <JobCard
+                      key={card.job.id}
+                      job={card.job}
+                      closes={card.closes}
+                      soon={card.soon}
+                      heading={showClosing ? "h3" : "h2"}
+                    />
                   ))}
                 </ul>
               </section>
@@ -192,7 +203,12 @@ function Pagination({ page, pages, filters }: { page: number; pages: number; fil
   }
   return (
     <nav className="mt-10 flex flex-wrap items-center gap-2" aria-label="Pagination">
-      {page > 1 ? <PageLink href={boardPath({ ...filters, page: page - 1 })}>Previous</PageLink> : null}
+      {page > 1 ? (
+        <PageLink href={boardPath({ ...filters, page: page - 1 })}>
+          <ChevronLeftIcon />
+          Previous
+        </PageLink>
+      ) : null}
       {tokens.map((token, index) =>
         token === "gap" ? (
           <span key={`gap-${index}`} className="px-1 text-sm text-muted" aria-hidden="true">
@@ -204,7 +220,12 @@ function Pagination({ page, pages, filters }: { page: number; pages: number; fil
           </PageLink>
         ),
       )}
-      {page < pages ? <PageLink href={boardPath({ ...filters, page: page + 1 })}>Next</PageLink> : null}
+      {page < pages ? (
+        <PageLink href={boardPath({ ...filters, page: page + 1 })}>
+          Next
+          <ChevronRightIcon />
+        </PageLink>
+      ) : null}
     </nav>
   );
 }
@@ -214,7 +235,7 @@ function PageLink({ href, current, children }: { href: string; current?: boolean
     <Link
       href={href}
       aria-current={current ? "page" : undefined}
-      className={`inline-flex h-10 min-w-10 items-center justify-center rounded-lg px-3 text-sm font-semibold ${
+      className={`inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-lg px-3 text-sm font-semibold tabular-nums ${
         current ? "bg-forest text-card" : "border border-line bg-card text-ink hover:border-forest hover:text-forest"
       }`}
     >
@@ -240,6 +261,7 @@ function FilterChip({
     <Link
       href={href}
       title={title}
+      aria-current={active ? "true" : undefined}
       className={`relative inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium ${
         active ? "bg-forest text-card" : "border border-line bg-card text-ink hover:border-forest hover:text-forest"
       }`}

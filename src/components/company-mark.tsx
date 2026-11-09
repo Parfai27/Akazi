@@ -36,6 +36,10 @@ export function CompanyMark({
       <img
         src={logo.src}
         alt=""
+        width={56}
+        height={56}
+        loading="lazy"
+        decoding="async"
         className={`size-full ${logo.cover ? "object-cover" : "object-contain"}`}
         onLoad={(event) => {
           if (event.currentTarget.naturalWidth === 0) setFailedSrc(logo.src);

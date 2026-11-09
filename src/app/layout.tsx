@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
-import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
+import { InstagramIcon, MailIcon, WhatsAppIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
 import { SiteFrame } from "@/components/site-frame";
 import { SiteHeader } from "@/components/site-header";
@@ -17,7 +17,8 @@ import {
 } from "@/lib/site";
 import "./globals.css";
 
-const FOOTER_LINK = "text-sm font-semibold text-card/90 underline-offset-4 hover:text-card hover:underline";
+const FOOTER_LINK =
+  "text-sm font-semibold text-card/90 underline-offset-4 hover:text-card hover:underline focus-visible:outline-card";
 
 function FooterColumn({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
@@ -56,6 +57,11 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   const ads = adConfig();
   return (
@@ -85,7 +91,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <p className="mt-3 max-w-xs text-sm leading-6 text-card/75">
                       Our vision is a Rwanda where everyone can reach the work that fits them.
                     </p>
-                    <a className="mt-3 inline-block text-sm font-semibold text-card underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
+                    <a
+                      className="mt-3 inline-flex items-center gap-2 text-sm font-semibold break-all text-card underline-offset-4 hover:underline focus-visible:outline-card"
+                      href={`mailto:${CONTACT_EMAIL}`}
+                    >
+                      <MailIcon />
                       {CONTACT_EMAIL}
                     </a>
                     <div className="mt-4 flex w-max max-w-full flex-wrap gap-2">
@@ -93,28 +103,31 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                         href={INSTAGRAM_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10 focus-visible:outline-card"
                       >
                         <InstagramIcon />
                         Instagram
+                        <span className="sr-only">(opens in a new tab)</span>
                       </a>
                       <a
                         href={WHATSAPP_CHANNEL_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10 focus-visible:outline-card"
                       >
                         <WhatsAppIcon />
-                        Channel
+                        WhatsApp channel
+                        <span className="sr-only">(opens in a new tab)</span>
                       </a>
                       <a
                         href={WHATSAPP_GROUP_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10"
+                        className="inline-flex h-10 items-center gap-2 rounded-full border border-card/20 px-3 text-sm font-semibold text-card hover:bg-card/10 focus-visible:outline-card"
                       >
                         <WhatsAppIcon />
-                        Group
+                        WhatsApp group
+                        <span className="sr-only">(opens in a new tab)</span>
                       </a>
                     </div>
                   </div>
