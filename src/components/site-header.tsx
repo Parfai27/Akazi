@@ -260,7 +260,7 @@ function HeaderSearch({
             setEditable(false);
             onBlur();
           }}
-          placeholder="Job title, company, or city"
+          placeholder="Job title, company, or city…"
           className="h-11 w-full rounded-full bg-wash pr-12 pl-10 text-base text-ink outline-none focus-visible:ring-2 focus-visible:ring-forest"
         />
         <button

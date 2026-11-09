@@ -62,7 +62,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               type="date"
               required
               defaultValue={search.from ?? ""}
-              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus:border-forest"
+              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
             />
           </label>
           <label className="text-sm">
@@ -72,7 +72,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               type="date"
               required
               defaultValue={search.to ?? ""}
-              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus:border-forest"
+              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
             />
           </label>
           <label className="text-sm">
@@ -80,7 +80,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             <select
               name="status"
               defaultValue={search.status ?? "all"}
-              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus:border-forest"
+              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
             >
               {STATUSES.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -94,7 +94,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
             <select
               name="place"
               defaultValue={search.place ?? "all"}
-              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus:border-forest"
+              className="h-11 rounded-lg border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
             >
               {PLACES.map((item) => (
                 <option key={item.id} value={item.id}>

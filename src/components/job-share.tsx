@@ -1,13 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
+import { CheckIcon, InstagramIcon, LinkIcon, WhatsAppIcon } from "@/components/icons";
 
 export function JobShare({ title, company }: { title: string; company: string }) {
   const [copied, setCopied] = useState(false);
   const [instagramCopied, setInstagramCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const message = `${title} at ${company}`;
+
+  async function writeLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyFailed(false);
+      return true;
+    } catch {
+      setCopyFailed(true);
+      return false;
+    }
+  }
 
   function shareWhatsApp() {
     const text = `${message}\n${window.location.href}`;
@@ -24,15 +36,16 @@ export function JobShare({ title, company }: { title: string; company: string })
         if (error instanceof DOMException && error.name === "AbortError") return;
       }
     }
-    await navigator.clipboard.writeText(url);
-    setInstagramCopied(true);
-    window.setTimeout(() => setInstagramCopied(false), 2000);
+    if (await writeLink(url)) {
+      setInstagramCopied(true);
+      window.setTimeout(() => setInstagramCopied(false), 2000);
+    }
     window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
   }
 
   async function copyLink() {
     const url = window.location.href;
-    await navigator.clipboard.writeText(url);
+    if (!(await writeLink(url))) return;
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   }
@@ -44,6 +57,7 @@ export function JobShare({ title, company }: { title: string; company: string })
         <button
           type="button"
           onClick={shareWhatsApp}
+          aria-label="Share on WhatsApp (opens in a new tab)"
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 text-sm font-semibold text-white hover:brightness-95"
         >
           <WhatsAppIcon />
@@ -55,16 +69,22 @@ export function JobShare({ title, company }: { title: string; company: string })
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[linear-gradient(45deg,#f9ce34,#ee2a7b_55%,#6228d7)] px-3 text-sm font-semibold text-white hover:brightness-95"
         >
           <InstagramIcon />
-          {instagramCopied ? "Link copied" : "Instagram"}
+          <span aria-live="polite">{instagramCopied ? "Link copied" : "Instagram"}</span>
         </button>
       </div>
       <button
         type="button"
         onClick={copyLink}
-        className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line px-3 text-sm font-semibold text-ink hover:border-forest hover:text-forest"
+        className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line px-3 text-sm font-semibold text-ink hover:border-forest hover:text-forest"
       >
-        {copied ? "Link copied" : "Copy link"}
+        {copied ? <CheckIcon /> : <LinkIcon />}
+        <span aria-live="polite">{copied ? "Link copied" : "Copy link"}</span>
       </button>
+      {copyFailed ? (
+        <p className="mt-2 text-xs leading-5 text-clay-deep" role="status">
+          Your browser blocked copying. Copy the address from the address bar instead.
+        </p>
+      ) : null}
     </div>
   );
 }

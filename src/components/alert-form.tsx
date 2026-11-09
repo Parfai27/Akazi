@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { AlertCircleIcon, BellIcon, CheckIcon } from "@/components/icons";
 import { subscribe, type AlertState } from "@/app/alerts/actions";
 
 const initial: AlertState = {};
@@ -12,6 +13,13 @@ export function AlertForm() {
   const [studies, setStudies] = useState("");
   const [cv, setCv] = useState("");
   const [consent, setConsent] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const doneRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (state.error) errorRef.current?.focus();
+    else if (state.ok) doneRef.current?.focus();
+  }, [state]);
 
   if (state.ok) {
     const matched = state.matched ?? 0;
@@ -24,8 +32,14 @@ export function AlertForm() {
       detail = `We found ${matched} match${matched === 1 ? "" : "es"}. The email did not go out this time, so try again in a moment.`;
     }
     return (
-      <p className="rounded-2xl border border-forest/30 bg-card px-5 py-6 text-base leading-7">
-        You are signed up. {detail}
+      <p
+        ref={doneRef}
+        tabIndex={-1}
+        role="status"
+        className="flex items-start gap-3 rounded-2xl border border-forest/30 bg-card px-5 py-6 text-base leading-7 outline-none"
+      >
+        <CheckIcon className="mt-1 size-5 shrink-0 text-forest" />
+        <span>You are signed up. {detail}</span>
       </p>
     );
   }
@@ -40,7 +54,7 @@ export function AlertForm() {
           autoComplete="name"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus:border-forest"
+          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
         />
       </label>
       <label className="block text-sm">
@@ -48,21 +62,24 @@ export function AlertForm() {
         <input
           name="email"
           type="email"
+          inputMode="email"
+          spellCheck={false}
           required
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus:border-forest"
+          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
         />
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-muted">What you studied</span>
         <input
           name="studies"
+          autoComplete="off"
           value={studies}
           onChange={(event) => setStudies(event.target.value)}
-          placeholder="Accounting, nursing, software engineering"
-          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus:border-forest"
+          placeholder="e.g. Accounting, nursing, software engineering…"
+          className="min-h-11 w-full rounded-xl border border-line bg-card px-3 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
         />
       </label>
       <label className="block text-sm">
@@ -72,8 +89,8 @@ export function AlertForm() {
           rows={6}
           value={cv}
           onChange={(event) => setCv(event.target.value)}
-          placeholder="Paste your CV or a short summary of your experience"
-          className="w-full rounded-xl border border-line bg-card px-3 py-2 text-base leading-6 outline-none focus:border-forest"
+          placeholder="Paste your CV or a short summary of your experience…"
+          className="w-full rounded-xl border border-line bg-card px-3 py-2 text-base leading-6 outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
         />
       </label>
       <label className="block text-sm">
@@ -96,12 +113,20 @@ export function AlertForm() {
         />
         <span>I agree to be emailed when Akazi finds a role that matches my studies or CV.</span>
       </label>
-      {state.error ? <p className="text-sm text-clay-deep">{state.error}</p> : null}
+      <div aria-live="polite">
+        {state.error ? (
+          <p ref={errorRef} tabIndex={-1} className="flex items-start gap-2 text-sm text-clay-deep outline-none">
+            <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
+            {state.error}
+          </p>
+        ) : null}
+      </div>
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 rounded-xl bg-forest px-4 text-sm font-medium text-card hover:bg-forest-deep disabled:opacity-60"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-forest px-4 text-sm font-medium text-card hover:bg-forest-deep disabled:opacity-60"
       >
+        <BellIcon />
         {pending ? "Saving…" : "Email me matching roles"}
       </button>
     </form>

@@ -96,3 +96,51 @@ body {
     animation: none;
   }
 }
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: rgba(30, 107, 88, 0.12);
+  }
+
+  a,
+  button,
+  input,
+  label,
+  select,
+  summary,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  :where(a, button, summary, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--forest);
+    outline-offset: 2px;
+  }
+
+  :where(h1, h2, h3, [id]) {
+    scroll-margin-top: 5.5rem;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+.akazi-lift {
+  transition-property: transform, box-shadow;
+  transition-duration: 150ms;
+}
+
+.akazi-lift:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-lift,
+  .akazi-lift:hover {
+    transition: none;
+    transform: none;
+  }
+}

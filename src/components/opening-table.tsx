@@ -50,8 +50,8 @@ export function OpeningTable({ rows }: { rows: OpeningRow[] }) {
               setQuery(event.target.value);
               setPage(0);
             }}
-            placeholder="Role, employer, or type"
-            className="h-11 w-full rounded-lg border border-line bg-card px-4 text-base outline-none focus:border-forest"
+            placeholder="Role, employer, or type…"
+            className="h-11 w-full rounded-lg border border-line bg-card px-4 text-base outline-none focus-visible:border-forest focus-visible:ring-3 focus-visible:ring-forest/25"
           />
         </label>
         <a href="/admin/export?kind=openings" className="inline-flex h-11 items-center rounded-lg border border-line bg-card px-4 text-sm font-semibold hover:border-forest hover:text-forest">
