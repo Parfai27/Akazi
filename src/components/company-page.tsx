@@ -83,15 +83,15 @@ export function LegalLayout({
           </time>
         </p>
       </CompanyHero>
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,42rem)] lg:items-start lg:gap-14 lg:py-14">
-        <nav aria-label="On this page" className="lg:sticky lg:top-24">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[15rem_minmax(0,42rem)] lg:items-start lg:gap-14 lg:py-14">
+        <nav aria-label="On this page" className="min-w-0 lg:sticky lg:top-24">
           <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">On this page</p>
           <ol className="mt-3 flex flex-wrap gap-2 lg:flex-col lg:flex-nowrap lg:gap-1">
             {sections.map((section, index) => (
-              <li key={section.id} className="shrink-0">
+              <li key={section.id} className="max-w-full">
                 <a
                   href={`#${section.id}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest lg:w-full lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2 lg:py-1.5"
+                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest lg:w-full lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2 lg:py-1.5"
                 >
                   <span className="text-xs font-bold text-forest tabular-nums">{index + 1}</span>
                   {section.title}

@@ -55,7 +55,7 @@ export default function PrivacyPage() {
               Some pages show advertisements from Google. Google may use a cookie to choose and measure those ads. You
               can read how Google uses data at{" "}
               <a
-                className="font-semibold text-forest underline-offset-4 hover:underline"
+                className="font-semibold break-all text-forest underline-offset-4 hover:underline"
                 href="https://policies.google.com/technologies/ads"
                 target="_blank"
                 rel="noopener noreferrer"

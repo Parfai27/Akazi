@@ -85,8 +85,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             }
             footer={
               <footer className="mt-auto bg-ink text-card">
-                <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 pt-10 pb-8 sm:px-6 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-16 lg:pt-12">
-                  <div>
+                <div className="mx-auto grid w-full grid-cols-1 max-w-6xl gap-10 px-4 pt-10 pb-8 sm:px-6 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-16 lg:pt-12">
+                  <div className="min-w-0">
                     <Logo compact />
                     <p className="mt-3 max-w-xs text-sm leading-6 text-card/75">
                       Our vision is a Rwanda where everyone can reach the work that fits them.
@@ -98,7 +98,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                       <MailIcon />
                       {CONTACT_EMAIL}
                     </a>
-                    <div className="mt-4 flex w-max max-w-full flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-2">
                       <a
                         href={INSTAGRAM_URL}
                         target="_blank"
