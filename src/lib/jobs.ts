@@ -280,6 +280,7 @@ async function readJobPage(id: string): Promise<JobPageData | null> {
   const job = readJob(id);
   if (!job) return null;
   const applyHref = resolveApplyHref(job);
+  const sourceHref = resolveSourceHref(job);
   return {
     job,
     related: relatedCards(job),
@@ -288,9 +289,9 @@ async function readJobPage(id: string): Promise<JobPageData | null> {
     soon: deadlineKind(job.deadlineAt) === "soon",
     metaDescription: jobMetaDescription(job),
     glance: jobGlance(job),
-    tips: applyTips(job, applyHref),
+    tips: applyTips(job, applyHref, sourceHref),
     applyHref,
-    sourceHref: resolveSourceHref(job),
+    sourceHref,
   };
 }
 
