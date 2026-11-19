@@ -42,13 +42,13 @@ export function jobGlance(job: JobRecord): string {
   const posted = formatPosted(job.postedAt);
   const deadline = formatPosted(job.deadlineAt);
   return [
-    `${job.title} is a ${mode} ${fn} opening at ${job.company}.`,
+    `${job.title} is ${/^[aeiou]/.test(mode) ? "an" : "a"} ${mode} ${fn} opening at ${job.company}.`,
     job.location.trim()
       ? `The posting places it in ${where}.`
       : `The posting does not name a city, and Akazi files it under ${where}.`,
     posted ? `The post date on the listing is ${posted}.` : "The original post date was not included.",
     deadline ? `The deadline written on the listing is ${deadline}.` : "No deadline is filled in on the listing.",
-    "The notes below are written by Akazi. The advertisement under them is the employer's own text.",
+    "The full advertisement, with duties and requirements, is on the employer's own posting.",
   ].join(" ");
 }
 

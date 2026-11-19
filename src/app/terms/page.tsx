@@ -33,8 +33,8 @@ export default function TermsPage() {
             <>
               <p>
                 Each advert belongs to the employer who published it. The summary and apply notes on a job page are
-                Akazi&apos;s. The longer advertisement is reproduced so you can read it without leaving the site, and it
-                may be incomplete or out of date. A deadline, a location, or a requirement on Akazi can differ from the
+                Akazi&apos;s. Akazi links to the full advertisement on the employer&apos;s posting rather than copying it,
+                and the details Akazi shows may be incomplete or out of date. A deadline, a location, or a requirement on Akazi can differ from the
                 original. Check the employer&apos;s page before you apply. When a deadline has passed, or the source no
                 longer shows the role, Akazi may remove it without notice.
               </p>

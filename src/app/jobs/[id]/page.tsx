@@ -2,14 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { AdSlot } from "@/components/ad-slot";
 import { CompanyMark } from "@/components/company-mark";
 import { JobCard } from "@/components/job-card";
-import { JobDescription } from "@/components/job-description";
 import { JobShare } from "@/components/job-share";
 import { JobViewers } from "@/components/job-viewers";
 import { AlertCircleIcon, ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
-import { adConfig } from "@/lib/ads";
 import { EMPTY_JOB_ID, getJobPage, listSitemapJobs } from "@/lib/jobs";
 import { functionLabel, jobFunction } from "@/lib/organize";
 import { placeLabel, workModeLabel } from "@/lib/tag";
@@ -31,6 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     title,
     description: data.metaDescription,
     alternates: { canonical: `/jobs/${id}` },
+    // Listings summarise other employers' adverts, so search engines index the board and guides instead.
+    robots: { index: false, follow: true },
     openGraph: {
       title,
       description: data.metaDescription,
@@ -54,7 +53,6 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const mode = workModeLabel(job.workMode);
   const showPlace = place.toLowerCase() !== mode.toLowerCase();
   const showLocation = Boolean(job.location && !/^(remote|hybrid|on-?site)$/i.test(job.location.trim()));
-  const ads = adConfig();
   const remoteGuide = job.workMode === "remote";
 
   return (
@@ -172,38 +170,25 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             ) : null}
           </section>
 
-          {job.description ? (
-            <div className="mt-10">
-              <h2 className="text-2xl font-extrabold tracking-tight">Employer advertisement</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                The text below is the public posting from {job.company}. Akazi did not write it.
-              </p>
-              <div className="mt-6">
-                <JobDescription text={job.description} />
-              </div>
-            </div>
-          ) : (
-            <p className="mt-10 text-base leading-7 text-muted">
-              The employer did not include a longer description. Use the summary above and the original posting.
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5">
+            <h2 className="text-lg font-extrabold">Full advertisement</h2>
+            <p className="mt-3 text-base leading-7 text-muted">
+              {job.company} publishes the duties, requirements, and how to apply on its own posting. Read it there before
+              you apply, since the employer may update it.
             </p>
-          )}
-
-          {ads?.slot ? <AdSlot client={ads.client} slot={ads.slot} /> : null}
-
-          {data.sourceHref ? (
-            <p className="mt-10 border-t border-line pt-4 text-sm leading-6">
+            {data.sourceHref ? (
               <a
-                className="inline-flex items-center gap-1.5 font-medium text-forest underline-offset-4 hover:underline"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold text-forest hover:border-forest"
                 href={data.sourceHref}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                View the original posting
+                Read the full advertisement
                 <ExternalIcon />
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
-            </p>
-          ) : null}
+            ) : null}
+          </section>
 
           {data.related.length > 0 ? (
             <section className="mt-12">
