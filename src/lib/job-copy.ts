@@ -52,51 +52,53 @@ export function jobGlance(job: JobRecord): string {
   ].join(" ");
 }
 
-export function applyTips(job: JobRecord, applyHref: string | null): string[] {
-  const mode = workModeLabel(job.workMode).toLowerCase();
-  const fn = functionLabel(jobFunction(job.title)).toLowerCase();
-  const where = job.location.trim();
-  const tips = [
-    `${job.title} is listed here so you can find it. ${job.company} takes the application. Akazi does not.`,
-  ];
+export function applyTips(job: JobRecord, applyHref: string | null, sourceHref: string | null): string[] {
+  const where = placePhrase(job);
+  const deadline = formatPosted(job.deadlineAt);
+  const tips: string[] = [];
+
+  tips.push(
+    sourceHref
+      ? "Read the full advertisement first. It lists the duties, the requirements, and any documents you need to send."
+      : "Ask the employer for the full job description if you cannot find one, so you know the requirements before applying.",
+  );
+
   if (applyHref?.startsWith("mailto:")) {
+    const address = applyHref.slice("mailto:".length).split("?")[0];
     tips.push(
-      `Email ${applyHref.slice("mailto:".length)} with the job title in the subject and a PDF CV attached.`,
+      `Apply by email to ${address}. Put “${job.title}” in the subject line and attach your CV as a PDF, with a cover letter if the advertisement asks for one.`,
     );
   } else if (applyHref) {
     tips.push(
-      `Use Apply. It opens the employer's own site. Finish every step there, including an account if they ask for one.`,
+      `Select Apply to open ${job.company}’s application page, and complete every step there. Akazi does not receive or forward applications.`,
     );
   } else {
-    tips.push("This listing has no apply link. Open the original posting and follow the instructions written there.");
+    tips.push("Follow the application instructions in the full advertisement. Akazi does not receive or forward applications.");
   }
-  if (formatPosted(job.deadlineAt)) {
-    tips.push(
-      `${deadlineLabel(job.deadlineAt)}. Many employers in Rwanda close a role on that day, so do not leave it to the last hour.`,
-    );
+
+  if (!deadline) {
+    tips.push("No closing date is listed. Check the advertisement, and apply soon, since roles can close without notice.");
+  } else if (deadlineLabel(job.deadlineAt).startsWith("Deadline passed")) {
+    tips.push(`The listed closing date, ${deadline}, has passed. Check the employer’s posting to see whether the role is still open.`);
   } else {
-    tips.push(
-      "No deadline is stored in the listing fields. Read the advert in case the date is only written in the text, and apply while it is still open.",
-    );
+    tips.push(`Apply before ${deadline}. Sending it a day or two early leaves time to fix a failed upload or email.`);
   }
+
   if (job.workMode === "remote") {
     tips.push(
-      where
-        ? `It is remote (${where}). Say that you are based in Rwanda, which hours you can overlap with the team, and which languages you work in.`
-        : "It is remote. Say that you are based in Rwanda, which hours you can overlap with the team, and which languages you work in.",
+      "This role is remote. Check that the employer hires people living in Rwanda, and mention your time zone (Kigali, UTC+2) in your application.",
     );
+  } else if (job.workMode === "hybrid") {
+    tips.push(`This role is hybrid, with some days in the office in ${where}. Apply only if you can travel there regularly.`);
   } else {
-    tips.push(
-      where
-        ? `This is ${mode} work in ${where}. Be clear that you can be there on the days they expect.`
-        : `This is ${mode} work. Be clear about the place you can be based.`,
-    );
+    tips.push(`This role is based in ${where}. Apply only if you can work there in person.`);
   }
+
   tips.push(
-    `Shape your CV around this ${fn} role and put the experience they ask for near the top. Name Kinyarwanda, English, or French only at the level you can actually work in.`,
+    "Match your CV to the requirements in the advertisement and put your most relevant experience first.",
   );
   tips.push(
-    `Do not pay a fee, buy a starter kit, or share a mobile-money PIN. A real application to ${job.company} will not ask you to pay in order to be hired.`,
+    "Never pay to apply or share a password or mobile-money PIN. Genuine employers do not charge application fees.",
   );
   return tips;
 }
