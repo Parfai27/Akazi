@@ -52,6 +52,7 @@ export function ChatWidget() {
   async function send(text: string) {
     const message = text.trim();
     if (!message || pending) return;
+    const history = messages.map(({ from, text }) => ({ from, text }));
     setDraft("");
     setMessages((current) => [...current, { from: "visitor", text: message }]);
     setPending(true);
@@ -59,7 +60,7 @@ export function ChatWidget() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, history }),
       });
       const data = (await response.json()) as { reply?: string; jobs?: ChatJob[] };
       setMessages((current) => [
@@ -107,7 +108,7 @@ export function ChatWidget() {
             {messages.map((message, index) => (
               <div key={index} className={message.from === "visitor" ? "text-right" : "text-left"}>
                 <p
-                  className={`inline-block max-w-[95%] rounded-2xl px-3 py-2 text-left text-sm leading-6 break-words ${
+                  className={`inline-block max-w-[95%] rounded-2xl px-3 py-2 text-left text-sm leading-6 break-words whitespace-pre-line ${
                     message.from === "visitor" ? "bg-forest text-card" : "bg-chip text-ink"
                   }`}
                 >
