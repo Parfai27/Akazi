@@ -35,5 +35,5 @@ services:
         sync: false
       - key: MAIL_HOOK_SECRET
         sync: false
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
         sync: false

@@ -39,9 +39,8 @@ export default function PrivacyPage() {
           title: "Ask Akazi chat",
           body: (
             <p>
-              Messages you type into Ask Akazi, with the last few messages of that chat, are sent to Google&apos;s Gemini
-              service to write the reply. Akazi does not save the chat. Google may keep and review these messages to
-              improve its services, so do not type your ID number, passwords, or other private details.
+              Messages you type into Ask Akazi, with the last few messages of that chat, are sent to Groq, an AI service, to
+              write the reply. Akazi does not save the chat. Groq handles these messages under its own privacy policy, so do not type your ID number, passwords, or other private details.
             </p>
           ),
         },
