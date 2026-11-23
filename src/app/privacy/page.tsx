@@ -35,6 +35,17 @@ export default function PrivacyPage() {
           ),
         },
         {
+          id: "chat",
+          title: "Ask Akazi chat",
+          body: (
+            <p>
+              Messages you type into Ask Akazi, with the last few messages of that chat, are sent to Google&apos;s Gemini
+              service to write the reply. Akazi does not save the chat. Google may keep and review these messages to
+              improve its services, so do not type your ID number, passwords, or other private details.
+            </p>
+          ),
+        },
+        {
           id: "your-data",
           title: "Asking about your data",
           body: (

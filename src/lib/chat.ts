@@ -42,7 +42,7 @@ function words(text: string) {
   return [...new Set(text.toLowerCase().match(/[a-z][a-z0-9+]{2,}/g) ?? [])];
 }
 
-function toChatJob(job: JobRecord): ChatJob {
+export function toChatJob(job: JobRecord): ChatJob {
   const posted = formatPosted(job.postedAt);
   return {
     id: job.publicId || jobKey(job.sourceId, job.externalId),
@@ -55,32 +55,9 @@ function toChatJob(job: JobRecord): ChatJob {
   };
 }
 
-export function answerQuestion(message: string, openings: JobRecord[]) {
-  const text = message.trim().toLowerCase();
-  const active = openings.filter((job) => job.isActive);
-  if (!text) {
-    return { reply: "Ask me about open roles, a deadline, or how email alerts work.", jobs: [] as ChatJob[] };
-  }
-  if (/^(hi|hello|hey|good morning|good afternoon)\b/.test(text)) {
-    return {
-      reply: `Hello. There are ${active.length} open roles on Akazi. Ask for Kigali, remote work, a skill, or a company.`,
-      jobs: [] as ChatJob[],
-    };
-  }
-  if (/alert|notif|email me|my cv|what i studied|studied/.test(text)) {
-    return {
-      reply:
-        "Open Alerts and leave your name, email, what you studied, and your CV. Tick the box to agree to email. When a role matches your studies or CV, Akazi emails you.",
-      jobs: [] as ChatJob[],
-    };
-  }
-  if (/how (do i |to )?apply|application/.test(text) && !/accountant|engineer|manager/.test(text)) {
-    return {
-      reply: "Open a role and use Apply.",
-      jobs: [] as ChatJob[],
-    };
-  }
-
+/** Narrows openings by place, work mode, company, and the remaining keywords in a question. */
+export function searchOpenings(question: string, active: JobRecord[]): JobRecord[] {
+  const text = question.trim().toLowerCase();
   let pool = active;
   if (/\bkigali\b/.test(text)) {
     pool = pool.filter((job) => job.place === "kigali" || /\bkigali\b/i.test(job.location));
@@ -108,6 +85,55 @@ export function answerQuestion(message: string, openings: JobRecord[]) {
       terms.some((word) => `${job.title} ${job.company} ${job.description}`.toLowerCase().includes(word)),
     );
   }
+
+  return pool;
+}
+
+export function answerQuestion(message: string, openings: JobRecord[]) {
+  const text = message.trim().toLowerCase();
+  const active = openings.filter((job) => job.isActive);
+  if (!text) {
+    return { reply: "Ask me about open roles, a deadline, or how email alerts work.", jobs: [] as ChatJob[] };
+  }
+  if (/^(hi|hello|hey|good morning|good afternoon)\b/.test(text)) {
+    return {
+      reply: `Hello. There are ${active.length} open roles on Akazi. Ask for Kigali, remote work, a skill, or a company.`,
+      jobs: [] as ChatJob[],
+    };
+  }
+  if (/^(how are you|how r u|how's it going|how is it going|what's up|sup)\b/.test(text)) {
+    return {
+      reply: "I'm well, thanks for asking. What kind of work are you looking for? Tell me a field, a place, or remote.",
+      jobs: [] as ChatJob[],
+    };
+  }
+  if (/^(thanks|thank you|thx|merci|murakoze|ok|okay|great|cool|bye|goodbye)\b/.test(text)) {
+    return {
+      reply: "You're welcome. Ask me any time you want to look for another role.",
+      jobs: [] as ChatJob[],
+    };
+  }
+  if (/^(who are you|what are you|what can you do|help)\b/.test(text)) {
+    return {
+      reply: "I'm Ask Akazi. I search the openings on this site. Try a field like nursing, a place like Kigali, or remote work.",
+      jobs: [] as ChatJob[],
+    };
+  }
+  if (/alert|notif|email me|my cv|what i studied|studied/.test(text)) {
+    return {
+      reply:
+        "Open Alerts and leave your name, email, what you studied, and your CV. Tick the box to agree to email. When a role matches your studies or CV, Akazi emails you.",
+      jobs: [] as ChatJob[],
+    };
+  }
+  if (/how (do i |to )?apply|application/.test(text) && !/accountant|engineer|manager/.test(text)) {
+    return {
+      reply: "Open a role and use Apply.",
+      jobs: [] as ChatJob[],
+    };
+  }
+
+  const pool = searchOpenings(text, active);
 
   const top = pool.slice(0, 4).map(toChatJob);
   if (top.length === 0) {
