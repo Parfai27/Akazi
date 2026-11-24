@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { AlertForm } from "@/components/alert-form";
 import { ArrowLeftIcon, BellIcon } from "@/components/icons";
 import { pageMeta } from "@/lib/site";
@@ -33,7 +34,9 @@ export default function AlertsPage() {
       </div>
       <div className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6">
         <div className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-6">
-          <AlertForm />
+          <Suspense fallback={null}>
+            <AlertForm />
+          </Suspense>
         </div>
       </div>
     </main>

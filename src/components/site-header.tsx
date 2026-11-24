@@ -8,6 +8,9 @@ import { Logo } from "@/components/logo";
 
 const NAV = [
   { href: "/", label: "Openings", match: (path: string) => path === "/" || path.startsWith("/jobs") },
+  { href: "/companies", label: "Companies", match: (path: string) => path.startsWith("/companies") },
+  { href: "/salary-calculator", label: "Salary", match: (path: string) => path === "/salary-calculator" },
+  { href: "/saved", label: "Saved", match: (path: string) => path === "/saved" },
   { href: "/about", label: "About", match: (path: string) => path === "/about" },
 ] as const;
 
@@ -96,7 +99,7 @@ export function SiteHeader() {
   return (
     <header
       ref={headerRef}
-      className={`sticky top-0 z-30 border-b border-line/80 bg-card/85 backdrop-blur-md ${
+      className={`sticky top-0 z-30 print:hidden border-b border-line/80 bg-card/85 backdrop-blur-md ${
         scrolled ? "shadow-[0_8px_24px_rgba(23,26,33,0.06)]" : ""
       }`}
     >
@@ -108,7 +111,7 @@ export function SiteHeader() {
         >
           <Logo />
         </Link>
-        <nav className="ml-2 hidden items-center gap-1 md:flex" aria-label="Primary">
+        <nav className="ml-2 hidden items-center gap-1 xl:flex" aria-label="Primary">
           {NAV.map((item) => (
             <NavLink key={item.href} href={item.href} active={item.match(pathname)}>
               {item.label}
@@ -142,7 +145,7 @@ export function SiteHeader() {
         <button
           ref={menuButton}
           type="button"
-          className="inline-flex size-11 items-center justify-center rounded-lg border border-line text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest md:hidden"
+          className="inline-flex size-11 items-center justify-center rounded-lg border border-line text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest xl:hidden"
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => setOpen((current) => !current)}
@@ -152,7 +155,7 @@ export function SiteHeader() {
         </button>
       </div>
       {open ? (
-        <div id={menuId} className="absolute inset-x-0 top-full z-30 border-b border-line bg-card shadow-[0_16px_32px_rgba(23,26,33,0.08)] md:hidden">
+        <div id={menuId} className="absolute inset-x-0 top-full z-30 border-b border-line bg-card shadow-[0_16px_32px_rgba(23,26,33,0.08)] xl:hidden">
           <div className="mx-auto grid w-full max-w-6xl gap-4 px-4 py-4">
             <HeaderSearch
               value={value}

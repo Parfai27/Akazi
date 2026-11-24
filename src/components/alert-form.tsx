@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AlertCircleIcon, BellIcon, CheckIcon } from "@/components/icons";
 import { subscribe, type AlertState } from "@/app/alerts/actions";
@@ -10,7 +11,9 @@ export function AlertForm() {
   const [state, action, pending] = useActionState(subscribe, initial);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [studies, setStudies] = useState("");
+  const params = useSearchParams();
+  // A job page can link here with the kind of work already filled in.
+  const [studies, setStudies] = useState(() => params.get("studies")?.slice(0, 120) ?? "");
   const [cv, setCv] = useState("");
   const [consent, setConsent] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);

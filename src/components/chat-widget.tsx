@@ -78,7 +78,7 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-2 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-96">
+    <div className="pointer-events-none fixed inset-x-3 print:hidden bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex flex-col items-end gap-2 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-96">
       {open ? (
         <section
           aria-labelledby={titleId}

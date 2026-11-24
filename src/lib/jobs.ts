@@ -5,12 +5,15 @@ import { crawlRuns, jobs, type JobRecord } from "@/db/schema";
 import { applyTips, jobGlance, jobMetaDescription, resolveApplyHref, resolveSourceHref } from "@/lib/job-copy";
 import {
   JOB_FUNCTIONS,
+  POSTED_WINDOWS,
   SHELVES,
   compareOpenings,
+  daysLeft,
   deadlineKind,
   deadlineOpen,
   jobFunction,
   postedRecently,
+  postedWithin,
   shelfOf,
   type JobFunction,
   type Shelf,
@@ -28,7 +31,8 @@ export type JobFilters = {
   shelf: string;
   fn: string;
   company: string;
-  fresh: boolean;
+  /** Posted within this many days; 0 means any time. */
+  posted: number;
   page: number;
 };
 
@@ -45,16 +49,20 @@ export type BoardModel = {
   total: number;
   page: number;
   pages: number;
-  freshCount: number;
+  postedCounts: Record<number, number>;
   shelfCounts: Record<Shelf, number>;
   functionCounts: Record<JobFunction, number>;
 };
 
+export type RelatedCard = BoardCard & { fresh: boolean };
+
 export type JobPageData = {
   job: JobRecord;
-  related: BoardCard[];
+  related: RelatedCard[];
+  companySlug: string;
   posted: string | null;
   deadline: string;
+  daysLeft: number | null;
   soon: boolean;
   metaDescription: string;
   glance: string;
@@ -88,7 +96,7 @@ const listedColumns = {
 };
 
 export function firstPageFilters(): JobFilters {
-  return { q: "", shelf: "", fn: "", company: "", fresh: false, page: 1 };
+  return { q: "", shelf: "", fn: "", company: "", posted: 0, page: 1 };
 }
 
 export function normalizeFilters(input: Partial<JobFilters> | undefined): JobFilters {
@@ -96,10 +104,10 @@ export function normalizeFilters(input: Partial<JobFilters> | undefined): JobFil
   const shelf = input?.shelf && SHELF_IDS.has(input.shelf) ? input.shelf : "";
   const fn = input?.fn && FUNCTION_IDS.has(input.fn) ? input.fn : "";
   const company = input?.company?.trim() ?? "";
-  const fresh = Boolean(input?.fresh);
+  const posted = (POSTED_WINDOWS as readonly number[]).includes(Number(input?.posted)) ? Number(input?.posted) : 0;
   const parsed = Number(input?.page);
   const page = Number.isFinite(parsed) && parsed > 1 ? Math.min(Math.floor(parsed), MAX_PAGE) : 1;
-  return { q, shelf, fn, company, fresh, page };
+  return { q, shelf, fn, company, posted, page };
 }
 
 export function boardPath(filters: JobFilters) {
@@ -108,7 +116,7 @@ export function boardPath(filters: JobFilters) {
   if (filters.shelf) params.set("shelf", filters.shelf);
   if (filters.fn) params.set("fn", filters.fn);
   if (filters.company) params.set("company", filters.company);
-  if (filters.fresh) params.set("new", "1");
+  if (filters.posted) params.set("posted", String(filters.posted));
   if (filters.page > 1) params.set("page", String(filters.page));
   const query = params.toString();
   return query ? `/?${query}` : "/";
@@ -179,32 +187,33 @@ async function readBoard(filters: JobFilters): Promise<BoardModel> {
   const shelf = filters.shelf as Shelf | "";
   const fn = filters.fn as JobFunction | "";
   const company = filters.company;
-  const fresh = filters.fresh;
-  const matchesNarrow = (job: JobRecord, options: { fn?: boolean; fresh?: boolean }) => {
+  const posted = filters.posted;
+  const matchesNarrow = (job: JobRecord, options: { fn?: boolean; posted?: boolean }) => {
     if (company && job.company !== company) return false;
     if (options.fn && fn && jobFunction(job.title) !== fn) return false;
-    if (options.fresh && fresh && !postedRecently(job)) return false;
+    if (options.posted && posted && !postedWithin(job, posted)) return false;
     return true;
   };
 
   const searched = active.filter((job) => matchesQuery(job, q));
   const shelfCounts: Record<Shelf, number> = { kigali: 0, country: 0, remote: 0 };
   for (const job of searched) {
-    if (!matchesNarrow(job, { fn: true, fresh: true })) continue;
+    if (!matchesNarrow(job, { fn: true, posted: true })) continue;
     shelfCounts[shelfOf(job)] += 1;
   }
 
   const inShelf = searched.filter((job) => !shelf || shelfOf(job) === shelf);
   const functionCounts = Object.fromEntries(JOB_FUNCTIONS.map((item) => [item.id, 0])) as Record<JobFunction, number>;
-  let freshCount = 0;
+  const postedCounts: Record<number, number> = Object.fromEntries(POSTED_WINDOWS.map((days) => [days, 0]));
   for (const job of inShelf) {
     if (company && job.company !== company) continue;
-    functionCounts[jobFunction(job.title)] += 1;
-    if (postedRecently(job)) freshCount += 1;
+    if (!posted || postedWithin(job, posted)) functionCounts[jobFunction(job.title)] += 1;
+    if (fn && jobFunction(job.title) !== fn) continue;
+    for (const days of POSTED_WINDOWS) if (postedWithin(job, days)) postedCounts[days] += 1;
   }
 
-  const openings = inShelf.filter((job) => matchesNarrow(job, { fn: true, fresh: true })).sort(compareOpenings);
-  const filtering = Boolean(q || shelf || fn || company || fresh);
+  const openings = inShelf.filter((job) => matchesNarrow(job, { fn: true, posted: true })).sort(compareOpenings);
+  const filtering = Boolean(q || shelf || fn || company || posted);
   const closingSoon = filtering
     ? []
     : openings
@@ -228,7 +237,7 @@ async function readBoard(filters: JobFilters): Promise<BoardModel> {
     total: openings.length,
     page,
     pages,
-    freshCount,
+    postedCounts,
     shelfCounts,
     functionCounts,
   };
@@ -241,19 +250,23 @@ function readJob(ref: string): JobRecord | null {
   return job;
 }
 
-function relatedCards(job: JobRecord): BoardCard[] {
+const RELATED_LIMIT = 6;
+
+function relatedCards(job: JobRecord): RelatedCard[] {
   const others = listedOpenJobs().filter((item) => item.publicId !== job.publicId);
   const fn = jobFunction(job.title);
+  const shelf = shelfOf(job);
   const sameCompany = others.filter((item) => item.company === job.company).sort(compareOpenings);
   const sameWork = others
     .filter((item) => item.company !== job.company && jobFunction(item.title) === fn)
-    .sort(compareOpenings);
+    // Same kind of work in the same place first, then anywhere.
+    .sort((a, b) => Number(shelfOf(b) === shelf) - Number(shelfOf(a) === shelf) || compareOpenings(a, b));
   const picked: JobRecord[] = [];
-  for (const item of [...sameCompany, ...sameWork]) {
-    if (picked.length >= 3) break;
+  for (const item of [...sameCompany.slice(0, 2), ...sameWork, ...sameCompany.slice(2)]) {
+    if (picked.length >= RELATED_LIMIT) break;
     picked.push(item);
   }
-  return picked.map(toCard);
+  return picked.map((item) => ({ ...toCard(item), fresh: postedRecently(item) }));
 }
 
 export async function getJob(ref: string): Promise<JobRecord | null> {
@@ -284,8 +297,10 @@ async function readJobPage(id: string): Promise<JobPageData | null> {
   return {
     job,
     related: relatedCards(job),
+    companySlug: companySlug(job.company),
     posted: formatPosted(job.postedAt),
     deadline: deadlineLabel(job.deadlineAt),
+    daysLeft: daysLeft(job.deadlineAt),
     soon: deadlineKind(job.deadlineAt) === "soon",
     metaDescription: jobMetaDescription(job),
     glance: jobGlance(job),
@@ -334,4 +349,78 @@ export async function getAdminSnapshot() {
     activeCount: Number(active?.count ?? 0),
     newCount: Number(unseen?.count ?? 0),
   };
+}
+
+/** A stable URL part for an employer name, such as "mtn-rwanda". */
+export function companySlug(name: string) {
+  return (
+    name
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "company"
+  );
+}
+
+export type CompanySummary = {
+  slug: string;
+  name: string;
+  count: number;
+  website: string;
+  places: string[];
+};
+
+export type CompanyPageData = CompanySummary & {
+  cards: BoardCard[];
+  functions: { id: JobFunction; count: number }[];
+  shelves: Record<Shelf, number>;
+};
+
+function companiesFrom(open: JobRecord[]) {
+  const byName = new Map<string, JobRecord[]>();
+  for (const job of open) {
+    if (!job.company.trim()) continue;
+    byName.set(job.company, [...(byName.get(job.company) ?? []), job]);
+  }
+  return byName;
+}
+
+function summarize(name: string, list: JobRecord[]): CompanySummary {
+  const places = [
+    ...new Set(list.map((job) => (job.workMode === "remote" ? "Remote" : job.location.split(",")[0].trim())).filter(Boolean)),
+  ];
+  return { slug: companySlug(name), name, count: list.length, website: list[0]?.applyUrl ?? "", places: places.slice(0, 3) };
+}
+
+export async function listCompanies(): Promise<CompanySummary[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("jobs");
+  return [...companiesFrom(listedOpenJobs()).entries()]
+    .map(([name, list]) => summarize(name, list))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+export async function getCompanyPage(slug: string): Promise<CompanyPageData | null> {
+  if (!/^[a-z0-9-]{1,80}$/.test(slug)) return null;
+  return readCompanyPage(slug);
+}
+
+async function readCompanyPage(slug: string): Promise<CompanyPageData | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("jobs");
+  const entry = [...companiesFrom(listedOpenJobs()).entries()].find(([name]) => companySlug(name) === slug);
+  if (!entry) return null;
+  const [name, list] = entry;
+  const functions = JOB_FUNCTIONS.map((item) => ({
+    id: item.id,
+    count: list.filter((job) => jobFunction(job.title) === item.id).length,
+  })).filter((item) => item.count > 0);
+  const shelves: Record<Shelf, number> = { kigali: 0, country: 0, remote: 0 };
+  for (const job of list) shelves[shelfOf(job)] += 1;
+  return { ...summarize(name, list), cards: [...list].sort(compareOpenings).map(toCard), functions, shelves };
 }
