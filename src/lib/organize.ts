@@ -106,3 +106,47 @@ export function compareOpenings<T extends Dated>(a: T, b: T) {
   const right = Number.isNaN(endB) ? Number.POSITIVE_INFINITY : endB;
   return left - right;
 }
+
+export type JobLevel = "intern" | "junior" | "mid" | "senior" | "manager" | "director";
+
+export const JOB_LEVELS: { id: JobLevel; label: string }[] = [
+  { id: "intern", label: "Internship" },
+  { id: "junior", label: "Entry level" },
+  { id: "mid", label: "Mid level" },
+  { id: "senior", label: "Senior" },
+  { id: "manager", label: "Manager" },
+  { id: "director", label: "Director" },
+];
+
+const LEVEL_RULES: { id: JobLevel; pattern: RegExp }[] = [
+  { id: "intern", pattern: /\b(intern(ship)?s?|trainees?|apprentice\w*|attach[eé]s?|graduate programme|volunteers?)\b/i },
+  { id: "director", pattern: /\b(directors?|heads? of|chief|vp|vice president|country representative)\b/i },
+  { id: "manager", pattern: /\b(managers?|lead|leads|supervisors?|coordinators?|team leader)\b/i },
+  { id: "senior", pattern: /\b(senior|sr\.?|principal|staff|expert)\b/i },
+  { id: "junior", pattern: /\b(junior|jr\.?|assistants?|associates?|entry[- ]level|officer ii|clerks?)\b/i },
+];
+
+/** A best guess from the title; titles without a cue count as mid level. */
+export function jobLevel(title: string): JobLevel {
+  return LEVEL_RULES.find((rule) => rule.pattern.test(title))?.id ?? "mid";
+}
+
+export function levelLabel(id: string) {
+  return JOB_LEVELS.find((item) => item.id === id)?.label ?? "Mid level";
+}
+
+/** Whole days from today until the deadline, or null when there is none. */
+export function daysLeft(iso: string | null, today = startOfToday()): number | null {
+  const end = time(iso);
+  if (Number.isNaN(end)) return null;
+  return Math.floor((end - today) / 86_400_000);
+}
+
+export const POSTED_WINDOWS = [1, 3, 7, 14] as const;
+
+export function postedWithin(job: { postedAt: string | null }, days: number, now = Date.now()) {
+  const posted = time(job.postedAt);
+  if (Number.isNaN(posted)) return false;
+  const age = now - posted;
+  return age >= -86_400_000 && age <= days * 86_400_000;
+}

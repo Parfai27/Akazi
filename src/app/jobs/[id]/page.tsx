@@ -3,12 +3,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CompanyMark } from "@/components/company-mark";
-import { JobCard } from "@/components/job-card";
+import {
+  AlertCircleIcon,
+  ArrowLeftIcon,
+  BellIcon,
+  BriefcaseIcon,
+  BuildingIcon,
+  CalendarIcon,
+  ExternalIcon,
+  EyeIcon,
+  LevelIcon,
+  PinIcon,
+} from "@/components/icons";
+import { JobAssistant } from "@/components/job-assistant";
+import { JobActions } from "@/components/job-extras";
+import { DeadlineMeter, FactChip, JobMap } from "@/components/job-facts";
 import { JobShare } from "@/components/job-share";
 import { JobViewers } from "@/components/job-viewers";
-import { AlertCircleIcon, ArrowLeftIcon, ExternalIcon, EyeIcon } from "@/components/icons";
-import { EMPTY_JOB_ID, getJobPage, listSitemapJobs } from "@/lib/jobs";
-import { functionLabel, jobFunction } from "@/lib/organize";
+import { SaveJobButton, ViewedTracker } from "@/components/saved-jobs";
+import { boardPath, EMPTY_JOB_ID, firstPageFilters, getJobPage, listSitemapJobs, type RelatedCard } from "@/lib/jobs";
+import { functionLabel, jobFunction, jobLevel, levelLabel, shelfOf } from "@/lib/organize";
+import type { StoredJob } from "@/lib/saved-jobs";
 import { placeLabel, workModeLabel } from "@/lib/tag";
 
 type Params = { id: string };
@@ -51,13 +66,17 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const { job } = data;
   const place = placeLabel(job.place);
   const mode = workModeLabel(job.workMode);
-  const showPlace = place.toLowerCase() !== mode.toLowerCase();
+  const fn = jobFunction(job.title);
   const showLocation = Boolean(job.location && !/^(remote|hybrid|on-?site)$/i.test(job.location.trim()));
+  const where = showLocation ? job.location : place;
   const remoteGuide = job.workMode === "remote";
+  const stored: StoredJob = { id: job.publicId, title: job.title, company: job.company, where, deadline: data.deadline };
+  const moreLikeThis = boardPath({ ...firstPageFilters(), fn, shelf: shelfOf(job) });
 
   return (
     <article>
-      <div className="sticky top-[4.5rem] z-20 bg-card">
+      <ViewedTracker job={stored} />
+      <div className="sticky top-[4.5rem] z-20 bg-card print:hidden">
         <div className="flex w-full items-center px-4 py-1 sm:px-8">
           <Link
             href="/"
@@ -69,30 +88,45 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div>
-          <div className="flex min-w-0 items-start gap-4">
-            <CompanyMark name={job.company} website={job.applyUrl} size="lg" />
-            <div className="min-w-0">
-              <h1 className="text-2xl font-extrabold tracking-tight break-words text-ink sm:text-3xl">{job.title}</h1>
-              <p className="mt-1 text-sm font-semibold text-forest">{job.company}</p>
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0">
+          <header className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-6">
+            <div className="flex min-w-0 items-start gap-4">
+              <CompanyMark name={job.company} website={job.applyUrl} size="lg" />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-extrabold tracking-tight break-words text-ink sm:text-3xl">{job.title}</h1>
+                <p className="mt-1 text-sm font-semibold break-words">
+                  <Link href={`/companies/${data.companySlug}`} className="text-forest underline-offset-4 hover:underline">
+                    {job.company}
+                  </Link>
+                </p>
+              </div>
+              <div className="print:hidden">
+                <SaveJobButton job={stored} variant="icon" />
+              </div>
             </div>
-          </div>
+            <DeadlineMeter days={data.daysLeft} label={data.deadline} />
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
-            <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{mode}</span>
-            {showPlace ? <span className="rounded-md bg-chip px-2.5 py-1 text-forest">{place}</span> : null}
-            <span className="rounded-md bg-amber px-2.5 py-1 text-clay">{functionLabel(jobFunction(job.title))}</span>
-            <Suspense
-              fallback={
-                <span className="inline-flex items-center gap-1 rounded-md bg-chip px-2.5 py-1 font-semibold text-forest" aria-hidden="true">
-                  <EyeIcon />
-                </span>
-              }
-            >
-              <JobViewers publicId={job.publicId} sourceId={job.sourceId} externalId={job.externalId} />
-            </Suspense>
-          </div>
+            <ul className="mt-5 flex flex-wrap gap-2" aria-label="Job facts">
+              <FactChip icon={<PinIcon />}>{where}</FactChip>
+              <FactChip icon={<BuildingIcon />}>{mode}</FactChip>
+              <FactChip icon={<LevelIcon />}>{levelLabel(jobLevel(job.title))}</FactChip>
+              <FactChip icon={<BriefcaseIcon />}>{functionLabel(fn)}</FactChip>
+              {data.posted ? <FactChip icon={<CalendarIcon />}>Posted {data.posted}</FactChip> : null}
+              <Suspense
+                fallback={
+                  <li className="inline-flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-sm font-semibold text-forest" aria-hidden="true">
+                    <EyeIcon />
+                  </li>
+                }
+              >
+                <li className="inline-flex items-center">
+                  <JobViewers publicId={job.publicId} sourceId={job.sourceId} externalId={job.externalId} />
+                </li>
+              </Suspense>
+            </ul>
+            <p className="mt-3 text-xs leading-5 text-muted">Level and job type are Akazi&apos;s guess from the title.</p>
+          </header>
 
           {!job.isActive ? (
             <p className="mt-6 flex items-center gap-2 rounded-xl border border-clay/30 bg-amber px-4 py-3 text-sm text-clay-deep">
@@ -101,35 +135,13 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             </p>
           ) : null}
 
-          <section className="mt-8 rounded-2xl border border-line bg-card p-5">
+          <div className="print:hidden">
+            <JobAssistant id={job.publicId} />
+          </div>
+
+          <section className="mt-6 rounded-2xl border border-line bg-card p-5">
             <h2 className="text-lg font-extrabold">At a glance</h2>
             <p className="mt-3 text-base leading-7 text-muted">{data.glance}</p>
-            <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="font-semibold">Company</dt>
-                <dd className="mt-1 text-muted">{job.company}</dd>
-              </div>
-              <div>
-                <dt className="font-semibold">Job type</dt>
-                <dd className="mt-1 text-muted">
-                  {functionLabel(jobFunction(job.title))} · {mode}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-semibold">Location</dt>
-                <dd className="mt-1 break-words text-muted">{showLocation ? job.location : place}</dd>
-              </div>
-              <div>
-                <dt className="font-semibold">Deadline</dt>
-                <dd className={`mt-1 ${data.soon ? "font-semibold text-clay" : "text-muted"}`}>{data.deadline}</dd>
-              </div>
-              {data.posted ? (
-                <div>
-                  <dt className="font-semibold">Date posted</dt>
-                  <dd className="mt-1 text-muted">{data.posted}</dd>
-                </div>
-              ) : null}
-            </dl>
           </section>
 
           <section className="mt-6 rounded-2xl border border-line bg-card p-5">
@@ -139,7 +151,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
                 <li key={tip}>{tip}</li>
               ))}
             </ol>
-            <p className="mt-4 text-sm leading-6">
+            <p className="mt-4 text-sm leading-6 print:hidden">
               <Link className="font-medium text-forest underline-offset-4 hover:underline" href="/guides/writing-a-cv-for-rwanda">
                 Writing a CV for Rwanda
               </Link>
@@ -156,18 +168,6 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
                 </>
               ) : null}
             </p>
-            {data.applyHref ? (
-              <a
-                href={data.applyHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-forest px-5 text-sm font-semibold text-card hover:bg-forest-deep"
-              >
-                Apply
-                <ExternalIcon />
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            ) : null}
           </section>
 
           <section className="mt-6 rounded-2xl border border-line bg-card p-5">
@@ -178,7 +178,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             </p>
             {data.sourceHref ? (
               <a
-                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold text-forest hover:border-forest"
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-line px-4 text-sm font-semibold text-forest hover:border-forest print:hidden"
                 href={data.sourceHref}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -190,59 +190,93 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
             ) : null}
           </section>
 
-          {data.related.length > 0 ? (
-            <section className="mt-12">
-              <h2 className="text-2xl font-extrabold tracking-tight">
-                Similar <span className="text-forest">openings</span>
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                Other live roles at {job.company}, or in the same kind of work, if Akazi has them.
-              </p>
-              <ul className="mt-5 grid gap-4 sm:grid-cols-2">
-                {data.related.map((card) => (
-                  <JobCard key={card.job.id} job={card.job} closes={card.closes} soon={card.soon} />
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          {job.workMode !== "remote" && showLocation ? <JobMap company={job.company} location={job.location} /> : null}
         </div>
 
-        <aside className="h-fit rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] lg:sticky lg:top-[8.5rem]">
-          <h2 className="text-lg font-extrabold">Job overview</h2>
-          <dl className="mt-4 grid gap-4 text-sm">
-            {data.posted ? (
-              <div>
-                <dt className="font-semibold">Date posted</dt>
-                <dd className="mt-1 text-muted">{data.posted}</dd>
-              </div>
-            ) : null}
-            <div>
-              <dt className="font-semibold">Deadline</dt>
-              <dd className={`mt-1 ${data.soon ? "font-semibold text-clay" : "text-muted"}`}>{data.deadline}</dd>
+        <aside className="grid h-fit min-w-0 grid-cols-1 gap-6">
+          <div className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]">
+            {data.applyHref ? (
+              <a
+                href={data.applyHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-forest px-5 text-base font-semibold text-card hover:bg-forest-deep print:hidden"
+              >
+                Apply
+                <ExternalIcon />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            ) : (
+              <p className="text-sm leading-6 text-muted">Follow the instructions in the full advertisement to apply.</p>
+            )}
+            <JobActions job={stored} />
+            <div className="print:hidden">
+              <JobShare title={job.title} company={job.company} />
             </div>
-            {showLocation ? (
-              <div>
-                <dt className="font-semibold">Location</dt>
-                <dd className="mt-1 break-words text-muted">{job.location}</dd>
-              </div>
-            ) : null}
-          </dl>
-          {data.applyHref ? (
-            <a
-              href={data.applyHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-forest px-5 text-sm font-semibold text-card hover:bg-forest-deep"
-            >
-              Apply
-              <ExternalIcon />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
+          </div>
+
+          {data.related.length > 0 ? (
+            <section aria-labelledby="similar-title" className="rounded-2xl border border-line bg-card p-5 print:hidden">
+              <h2 id="similar-title" className="text-lg font-extrabold">
+                Similar openings
+              </h2>
+              <ul className="mt-4 grid grid-cols-1 gap-3">
+                {data.related.map((card) => (
+                  <SimilarJob key={card.job.id} card={card} />
+                ))}
+              </ul>
+              <Link
+                href={moreLikeThis}
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-wash px-4 text-sm font-semibold text-forest hover:bg-chip"
+              >
+                See more like this
+              </Link>
+            </section>
           ) : null}
-          <JobShare title={job.title} company={job.company} />
+
+          <Link
+            href={`/alerts?studies=${encodeURIComponent(functionLabel(fn) === "Other" ? job.title : functionLabel(fn))}`}
+            className="flex items-start gap-3 rounded-2xl border border-line bg-card p-5 hover:border-forest print:hidden"
+          >
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-chip text-forest">
+              <BellIcon />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-bold text-ink">Email me jobs like this</span>
+              <span className="mt-1 block text-sm leading-6 text-muted">Get new {functionLabel(fn).toLowerCase()} roles by email.</span>
+            </span>
+          </Link>
         </aside>
       </div>
     </article>
+  );
+}
+
+function SimilarJob({ card }: { card: RelatedCard }) {
+  const { job } = card;
+  const where = job.workMode === "remote" ? "Remote" : job.location.split(",")[0] || placeLabel(job.place);
+  return (
+    <li className="relative flex items-start gap-3 rounded-xl bg-wash p-3 hover:bg-chip">
+      <CompanyMark name={job.company} website={job.applyUrl} />
+      <div className="min-w-0 flex-1">
+        <Link href={`/jobs/${job.publicId}`} className="line-clamp-2 font-bold break-words text-ink after:absolute after:inset-0 hover:text-forest">
+          {job.title}
+        </Link>
+        <p className="mt-0.5 truncate text-xs font-semibold text-forest">{job.company}</p>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted">
+          <PinIcon className="size-3 shrink-0" />
+          {where}
+        </p>
+        {card.soon || card.fresh ? (
+          <p className="mt-1.5 flex flex-wrap gap-1">
+            {card.soon ? (
+              <span className="rounded-md bg-amber px-2 py-0.5 text-[11px] font-bold text-clay-deep">Closing soon</span>
+            ) : null}
+            {card.fresh ? <span className="rounded-md bg-card px-2 py-0.5 text-[11px] font-bold text-forest">New</span> : null}
+          </p>
+        ) : null}
+      </div>
+    </li>
   );
 }
 

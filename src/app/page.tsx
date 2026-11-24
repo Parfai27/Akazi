@@ -4,9 +4,10 @@ import { Suspense, type ReactNode } from "react";
 import { AdSlot } from "@/components/ad-slot";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@/components/icons";
 import { JobCard } from "@/components/job-card";
+import { RecentJobsList } from "@/components/saved-jobs";
 import { adConfig } from "@/lib/ads";
 import { boardPath, firstPageFilters, getBoard, normalizeFilters, type BoardModel, type JobFilters } from "@/lib/jobs";
-import { JOB_FUNCTIONS, SHELVES } from "@/lib/organize";
+import { JOB_FUNCTIONS, POSTED_WINDOWS, SHELVES } from "@/lib/organize";
 import { SITE_DESCRIPTION } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -32,7 +33,8 @@ function filtersFrom(search: Search): JobFilters {
     shelf: one(search.shelf),
     fn: one(search.fn),
     company: one(search.company),
-    fresh: one(search.new) === "1",
+    // "new=1" was the old link for roles posted this week.
+    posted: Number(one(search.posted)) || (one(search.new) === "1" ? 7 : 0),
     page: Number(one(search.page)),
   });
 }
@@ -56,7 +58,7 @@ async function FilteredBoard({ searchParams }: { searchParams: Promise<Search> }
 function BoardMarkup({ model }: { model: BoardModel }) {
   const filters = model.filters;
   const ads = adConfig();
-  const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company || filters.fresh);
+  const filtering = Boolean(filters.q || filters.shelf || filters.fn || filters.company || filters.posted);
   const showClosing = model.closingSoon.length > 0;
 
   return (
@@ -104,21 +106,13 @@ function BoardMarkup({ model }: { model: BoardModel }) {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-x-4 gap-y-3 pt-2">
-          <FilterChip href={boardPath({ ...filters, fn: "", fresh: false, page: 1 })} active={!filters.fn && !filters.fresh}>
+          <FilterChip href={boardPath({ ...filters, fn: "", page: 1 })} active={!filters.fn}>
             All work
-          </FilterChip>
-          <FilterChip
-            href={boardPath({ ...filters, fresh: !filters.fresh, fn: "", page: 1 })}
-            active={filters.fresh}
-            count={model.freshCount}
-            title="Posted in the last 7 days"
-          >
-            New
           </FilterChip>
           {JOB_FUNCTIONS.filter((item) => model.functionCounts[item.id] > 0).map((item) => (
             <FilterChip
               key={item.id}
-              href={boardPath({ ...filters, fn: filters.fn === item.id ? "" : item.id, fresh: false, page: 1 })}
+              href={boardPath({ ...filters, fn: filters.fn === item.id ? "" : item.id, page: 1 })}
               active={filters.fn === item.id}
               count={model.functionCounts[item.id]}
             >
@@ -126,6 +120,27 @@ function BoardMarkup({ model }: { model: BoardModel }) {
             </FilterChip>
           ))}
         </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-2" role="group" aria-labelledby="posted-label">
+          <span id="posted-label" className="mr-1 text-sm font-semibold text-muted">
+            Posted
+          </span>
+          <PostedChip href={boardPath({ ...filters, posted: 0, page: 1 })} active={!filters.posted}>
+            Any time
+          </PostedChip>
+          {POSTED_WINDOWS.map((days) => (
+            <PostedChip
+              key={days}
+              href={boardPath({ ...filters, posted: filters.posted === days ? 0 : days, page: 1 })}
+              active={filters.posted === days}
+              count={model.postedCounts[days]}
+            >
+              {days === 1 ? "Last 24 hours" : `Last ${days} days`}
+            </PostedChip>
+          ))}
+        </div>
+
+        {filtering ? null : <RecentJobsList limit={6} compact />}
 
         <p className="mt-8 text-sm text-muted">
           {model.total} open {model.total === 1 ? "role" : "roles"}
@@ -275,6 +290,33 @@ function FilterChip({
         >
           {count}
         </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function PostedChip({
+  href,
+  active,
+  count,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  count?: number;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "true" : undefined}
+      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${
+        active ? "bg-ink text-card" : "border border-line bg-card text-ink hover:border-forest hover:text-forest"
+      }`}
+    >
+      {children}
+      {count != null ? (
+        <span className={`text-xs font-bold tabular-nums ${active ? "text-card/80" : "text-muted"}`}>{count}</span>
       ) : null}
     </Link>
   );

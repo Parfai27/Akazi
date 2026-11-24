@@ -4,26 +4,8 @@ import { db } from "@/db";
 import { jobs } from "@/db/schema";
 import { answerQuestion } from "@/lib/chat";
 import { answerWithAi, type ChatTurn } from "@/lib/chat-ai";
+import { allowAi } from "@/lib/groq";
 import { deadlineOpen } from "@/lib/organize";
-
-const WINDOW_MS = 10 * 60 * 1000;
-const PER_WINDOW = 20;
-const recentByVisitor = new Map<string, number[]>();
-
-/** Keeps one visitor from using up the free AI quota; over the limit they get the keyword answer. */
-function allowAi(request: Request) {
-  const visitor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const now = Date.now();
-  const times = (recentByVisitor.get(visitor) ?? []).filter((time) => now - time < WINDOW_MS);
-  if (times.length >= PER_WINDOW) {
-    recentByVisitor.set(visitor, times);
-    return false;
-  }
-  times.push(now);
-  recentByVisitor.set(visitor, times);
-  if (recentByVisitor.size > 5000) recentByVisitor.clear();
-  return true;
-}
 
 function readHistory(value: unknown): ChatTurn[] {
   if (!Array.isArray(value)) return [];

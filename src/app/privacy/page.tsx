@@ -36,11 +36,22 @@ export default function PrivacyPage() {
         },
         {
           id: "chat",
-          title: "Ask Akazi chat",
+          title: "Ask Akazi chat and job assistant",
           body: (
             <p>
-              Messages you type into Ask Akazi, with the last few messages of that chat, are sent to Groq, an AI service, to
+              Messages you type into Ask Akazi, with the last few messages of that chat, and anything you type into a job
+              page&apos;s fit check, are sent to Groq, an AI service, to
               write the reply. Akazi does not save the chat. Groq handles these messages under its own privacy policy, so do not type your ID number, passwords, or other private details.
+            </p>
+          ),
+        },
+        {
+          id: "saved",
+          title: "Saved jobs and maps",
+          body: (
+            <p>
+              Saved and recently viewed jobs are kept in your own browser, not on Akazi&apos;s server. Job pages with a
+              place show a Google Maps map, so Google receives that you viewed the map and may set its own cookies.
             </p>
           ),
         },

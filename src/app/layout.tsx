@@ -84,7 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </Suspense>
             }
             footer={
-              <footer className="mt-auto bg-ink text-card">
+              <footer className="mt-auto bg-ink text-card print:hidden">
                 <div className="mx-auto grid w-full grid-cols-1 max-w-6xl gap-10 px-4 pt-10 pb-8 sm:px-6 lg:grid-cols-[max-content_minmax(0,1fr)] lg:items-start lg:gap-16 lg:pt-12">
                   <div className="min-w-0">
                     <Logo compact />
@@ -139,6 +139,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                         { href: "/?shelf=kigali", label: "Kigali" },
                         { href: "/?shelf=country", label: "Elsewhere" },
                         { href: "/?shelf=remote", label: "Remote" },
+                        { href: "/companies", label: "Companies" },
+                        { href: "/saved", label: "Saved jobs" },
                         { href: "/alerts", label: "Alerts" },
                       ]}
                     />
@@ -146,6 +148,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                       title="Resources"
                       links={[
                         { href: "/guides", label: "Guides" },
+                        { href: "/salary-calculator", label: "Salary calculator" },
                         { href: "/guides/writing-a-cv-for-rwanda", label: "Writing a CV" },
                         { href: "/guides/preparing-for-interviews", label: "Interviews" },
                         { href: "/guides/remote-work-from-rwanda", label: "Remote work" },
