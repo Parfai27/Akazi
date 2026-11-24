@@ -130,7 +130,8 @@ function instructions(active: JobRecord[], candidates: JobRecord[]) {
 Respond with a JSON object: {"reply": string, "job_ids": string[]}.
 
 How to answer:
-- Be warm, natural, and brief: two to four short sentences. Reply in the visitor's language (English, Kinyarwanda, or French).
+- Be warm, natural, and brief: two to four short sentences.
+- Language: write the whole reply, greeting included, in the language of the visitor's latest message. Default to English. Use Kinyarwanda or French only when the visitor's latest message is written in that language. Mentioning Rwanda or Kigali is not a reason to switch language.
 - Small talk is fine. Answer it like a person, then offer to help find a job.
 - You can give practical career help: CVs, cover letters, interviews, internships, and working remotely from Rwanda.
 - When the visitor wants roles, recommend up to 4 from the OPENINGS list below and put their ids in job_ids. The cards with title, company, and deadline are shown under your reply, so do not repeat ids or long details in the text.
