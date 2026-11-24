@@ -7,16 +7,26 @@ import { formatPosted } from "@/lib/url";
 
 export type ChatTurn = { from: "visitor" | "akazi"; text: string };
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "openai/gpt-oss-20b";
 const CANDIDATES = 25;
 const TIMEOUT_MS = 15_000;
 
+const REPLY_SCHEMA = {
+  type: "object",
+  properties: {
+    reply: { type: "string" },
+    job_ids: { type: "array", items: { type: "string" } },
+  },
+  required: ["reply", "job_ids"],
+  additionalProperties: false,
+};
+
 export function aiConfigured() {
-  return Boolean(process.env.GEMINI_API_KEY?.trim());
+  return Boolean(process.env.GROQ_API_KEY?.trim());
 }
 
 /**
- * Answers with Gemini, grounded in the openings that best match the conversation.
+ * Answers with a Groq-hosted model, grounded in the openings that best match the conversation.
  * Returns null when the model is not configured or fails, so the caller can fall back to the keyword answer.
  */
 export async function answerWithAi(
@@ -24,57 +34,47 @@ export async function answerWithAi(
   history: ChatTurn[],
   active: JobRecord[],
 ): Promise<{ reply: string; jobs: ChatJob[] } | null> {
-  const key = process.env.GEMINI_API_KEY?.trim();
+  const key = process.env.GROQ_API_KEY?.trim();
   if (!key) return null;
-  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+  const model = process.env.GROQ_MODEL?.trim() || DEFAULT_MODEL;
 
   const recent = [...history.filter((turn) => turn.from === "visitor").slice(-2).map((turn) => turn.text), message].join(" ");
   const candidates = pickCandidates(message, recent, active);
   const byId = new Map(candidates.map((job) => [toChatJob(job).id, job]));
 
-  // Gemini expects the conversation to open with the visitor, so the greeting bubble is left out.
-  const turns = history.slice(-8);
-  while (turns[0]?.from === "akazi") turns.shift();
-  const contents = [
-    ...turns.map((turn) => ({
-      role: turn.from === "visitor" ? "user" : "model",
-      parts: [{ text: turn.text }],
+  const messages = [
+    { role: "system", content: instructions(active, candidates) },
+    ...history.slice(-8).map((turn) => ({
+      role: turn.from === "visitor" ? "user" : "assistant",
+      content: turn.text,
     })),
-    { role: "user", parts: [{ text: message }] },
+    { role: "user", content: message },
   ];
+  // Strict schemas only work on some Groq models; the others get plain JSON mode.
+  const strict = /^openai\/gpt-oss|^qwen\/qwen3\.8/.test(model);
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
       signal: AbortSignal.timeout(TIMEOUT_MS),
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: instructions(active, candidates) }] },
-        contents,
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              reply: { type: "STRING" },
-              job_ids: { type: "ARRAY", items: { type: "STRING" } },
-            },
-            required: ["reply", "job_ids"],
-          },
-        },
+        model,
+        messages,
+        temperature: 0.5,
+        max_completion_tokens: 1024,
+        ...(model.startsWith("openai/gpt-oss") ? { reasoning_effort: "low" } : {}),
+        response_format: strict
+          ? { type: "json_schema", json_schema: { name: "chat_reply", strict: true, schema: REPLY_SCHEMA } }
+          : { type: "json_object" },
       }),
     });
     if (!response.ok) {
-      console.error(`Chat AI request failed: ${response.status}`);
+      console.error(`Chat AI request failed: ${response.status} ${(await response.text()).slice(0, 300)}`);
       return null;
     }
-    const data = (await response.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
-    };
-    const raw = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
-    const parsed = JSON.parse(raw) as { reply?: unknown; job_ids?: unknown };
+    const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+    const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? "") as { reply?: unknown; job_ids?: unknown };
     const reply = typeof parsed.reply === "string" ? parsed.reply.trim() : "";
     if (!reply) return null;
     const ids = Array.isArray(parsed.job_ids) ? parsed.job_ids.filter((id): id is string => typeof id === "string") : [];
@@ -126,6 +126,8 @@ function instructions(active: JobRecord[], candidates: JobRecord[]) {
     .join("\n");
 
   return `You are Ask Akazi, the assistant on akazi.co.rw, a free job board for people looking for work in Rwanda.
+
+Respond with a JSON object: {"reply": string, "job_ids": string[]}.
 
 How to answer:
 - Be warm, natural, and brief: two to four short sentences. Reply in the visitor's language (English, Kinyarwanda, or French).
