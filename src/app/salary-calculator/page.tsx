@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeftIcon, CalculatorIcon } from "@/components/icons";
+import { PageHero } from "@/components/page-hero";
+import { CalculatorIcon } from "@/components/icons";
 import { SalaryCalculator } from "@/components/salary-calculator";
 import { breakdown, RATES_CHECKED } from "@/lib/salary";
 import { pageMeta } from "@/lib/site";
@@ -17,31 +18,15 @@ export default function SalaryCalculatorPage() {
   const example = breakdown(350_000);
 
   return (
-    <main>
-      <div className="border-b border-line bg-wash">
-        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-          <p className="flex items-center gap-2 text-sm font-medium text-forest">
-            <Link href="/" className="inline-flex items-center gap-1 hover:underline">
-              <ArrowLeftIcon />
-              Home
-            </Link>
-            <span aria-hidden="true">→</span>
-            <span className="inline-flex items-center gap-1 text-ink">
-              <CalculatorIcon />
-              Salary calculator
-            </span>
-          </p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-forest sm:text-5xl">
-            Rwanda salary calculator
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-            Type the gross monthly salary from a job offer to see roughly what reaches your bank account, and where the rest
-            goes.
-          </p>
-        </div>
-      </div>
+    <main className="akazi-terrain pb-16">
+      <PageHero
+        crumbs={[{ label: "Salary calculator", icon: <CalculatorIcon /> }]}
+        photo={{ src: "/people/work-finance.jpg", position: "center 30%" }}
+        title="Rwanda salary calculator"
+        lede="Type the gross monthly salary from a job offer to see roughly what reaches your bank account, and where the rest goes."
+      />
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div className="relative mx-auto -mt-14 w-full max-w-6xl px-4 sm:px-6">
         <SalaryCalculator />
 
         <p className="mt-6 rounded-xl border border-clay/30 bg-amber px-4 py-3 text-sm leading-6 text-clay-deep">
@@ -49,9 +34,9 @@ export default function SalaryCalculatorPage() {
           change the real figure. Confirm with your employer&apos;s HR team, the Rwanda Revenue Authority (RRA), or RSSB.
         </p>
 
-        <article className="mt-12 grid max-w-3xl gap-8 text-base leading-7 text-muted">
+        <article className="akazi-reveal mt-12 grid max-w-3xl gap-8 rounded-[1.75rem] border border-line bg-card p-6 text-base leading-7 text-muted shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-10">
           <section>
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink">How take-home pay is worked out</h2>
+            <h2 className="akazi-wipe text-2xl font-extrabold tracking-tight text-ink">How take-home pay is worked out</h2>
             <p className="mt-3">
               A Rwandan payslip starts from the gross salary and takes off four things before you are paid: income tax
               (PAYE), your pension contribution, a small maternity leave contribution, and community health insurance
@@ -61,7 +46,7 @@ export default function SalaryCalculatorPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink">PAYE is charged in bands</h2>
+            <h2 className="akazi-wipe text-2xl font-extrabold tracking-tight text-ink">PAYE is charged in bands</h2>
             <p className="mt-3">
               Pay As You Earn is not one flat rate. Each slice of the monthly salary is taxed at its own rate: the first
               60,000 RWF is tax-free, the part from 60,001 to 100,000 RWF is taxed at 10%, the part from 100,001 to 200,000
@@ -71,7 +56,7 @@ export default function SalaryCalculatorPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink">A worked example: 350,000 RWF a month</h2>
+            <h2 className="akazi-wipe text-2xl font-extrabold tracking-tight text-ink">A worked example: 350,000 RWF a month</h2>
             <ul className="mt-3 grid gap-2">
               <li>PAYE: 0 on the first 60,000, 4,000 on the next 40,000, 20,000 on the next 100,000, and 45,000 on the last 150,000, so {rwf.format(example.paye)} RWF.</li>
               <li>Pension at 6%: {rwf.format(example.pension)} RWF. Maternity at 0.3%: {rwf.format(example.maternity)} RWF.</li>
@@ -84,7 +69,7 @@ export default function SalaryCalculatorPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink">Using this when you compare offers</h2>
+            <h2 className="akazi-wipe text-2xl font-extrabold tracking-tight text-ink">Using this when you compare offers</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li>Ask whether a figure in an advert or offer is gross or net. Many Rwandan offers quote gross pay.</li>
               <li>Ask what allowances are included, such as transport or housing, and whether they are taxed.</li>

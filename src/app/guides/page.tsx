@@ -12,6 +12,8 @@ export const metadata = pageMeta({
 export default function GuidesPage() {
   return (
     <ProsePage
+      crumbs={[{ label: "Guides" }]}
+      photo={{ src: "/people/work-education.jpg", position: "center 40%" }}
       title="Guides"
       lede="These notes are written for Akazi. They are not copied from an employer advert. Use them before you apply, then go back to the opening and follow that employer’s instructions."
     >
@@ -20,9 +22,9 @@ export default function GuidesPage() {
           <li key={guide.slug}>
             <Link
               href={`/guides/${guide.slug}`}
-              className="block rounded-2xl border border-line bg-card p-5 hover:border-forest"
+              className="akazi-lift group block rounded-2xl border border-line bg-wash p-5 hover:border-forest hover:bg-card"
             >
-              <span className="block text-lg font-extrabold tracking-tight text-ink">{guide.title}</span>
+              <span className="block text-lg font-extrabold tracking-tight text-ink group-hover:text-forest">{guide.title}</span>
               <span className="mt-2 block text-sm leading-6 text-muted">{guide.lede}</span>
             </Link>
           </li>

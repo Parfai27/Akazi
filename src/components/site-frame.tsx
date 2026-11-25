@@ -1,5 +1,6 @@
 "use client";
 
+import { BackToTop } from "@/components/back-to-top";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { AlertNotice } from "@/components/alert-notice";
@@ -33,6 +34,7 @@ export function SiteFrame({
       {footer}
       <AlertNotice />
       <ChatWidget />
+      <BackToTop />
       <VisitBeacon />
     </>
   );
