@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ApplyIcon, CompanyHero, FeatureCard, MarkIcon, PeopleIcon, SourceIcon } from "@/components/company-page";
 import { getPublicStats } from "@/lib/jobs";
-import { CONTACT_EMAIL, pageMeta } from "@/lib/site";
+import { CANONICAL_HOST, CANONICAL_ORIGIN, CONTACT_EMAIL, pageMeta } from "@/lib/site";
 
 export const metadata = pageMeta({
   title: "About",
@@ -41,7 +41,15 @@ export default async function AboutPage() {
         eyebrow="About"
         title="A job board for work in Rwanda."
         lede="Akazi collects openings that employers have already published, and puts them in one place. The name is the Kinyarwanda word for work."
-      />
+      >
+        <a
+          href={CANONICAL_ORIGIN}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/15"
+        >
+          <span className="text-[#d6e8e0]">Official site</span>{" "}
+          <span className="text-[#f5b942]">{CANONICAL_HOST}</span>
+        </a>
+      </CompanyHero>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <section aria-labelledby="mission-title">
@@ -135,7 +143,11 @@ export default async function AboutPage() {
           <div className="max-w-xl">
             <h2 className="text-2xl font-extrabold tracking-tight">Find your next role</h2>
             <p className="mt-2 text-sm leading-6 text-card/80">
-              Browse what is open now. Questions, corrections, and takedown requests go to{" "}
+              Browse what is open now on{" "}
+              <a className="font-semibold text-card underline-offset-4 hover:underline" href={CANONICAL_ORIGIN}>
+                {CANONICAL_HOST}
+              </a>
+              , the official Akazi site. Questions, corrections, and takedown requests go to{" "}
               <a className="font-semibold text-card underline-offset-4 hover:underline" href={`mailto:${CONTACT_EMAIL}`}>
                 {CONTACT_EMAIL}
               </a>
