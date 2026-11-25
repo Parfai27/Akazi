@@ -37,19 +37,20 @@ const faqs = [
 
 export default function ContactPage() {
   return (
-    <main className="bg-wash">
+    <main className="akazi-terrain">
       <CompanyHero
+        photo={{ src: "/people/work-finance.jpg", position: "center 30%" }}
         eyebrow="Contact"
         title="Write to a person."
         lede="Questions, corrections, and takedown requests come to one mailbox. A person reads them."
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-        <h2 className="text-3xl font-extrabold tracking-tight text-ink">Reach Akazi</h2>
+        <h2 className="akazi-wipe text-3xl font-extrabold tracking-tight text-ink">Reach Akazi</h2>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           <li>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+              className="akazi-reveal flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
             >
               <IconBadge>
                 <MailIcon />
@@ -66,7 +67,7 @@ export default function ContactPage() {
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+              className="akazi-reveal flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
             >
               <IconBadge>
                 <InstagramIcon />
@@ -83,7 +84,7 @@ export default function ContactPage() {
               href={WHATSAPP_CHANNEL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+              className="akazi-reveal flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
             >
               <IconBadge>
                 <WhatsAppIcon />
@@ -100,7 +101,7 @@ export default function ContactPage() {
               href={WHATSAPP_GROUP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+              className="akazi-reveal flex h-full gap-4 rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] hover:border-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
             >
               <IconBadge>
                 <WhatsAppIcon />
@@ -115,7 +116,7 @@ export default function ContactPage() {
         </ul>
 
         <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <section className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-6" aria-labelledby="topics-title">
+          <section className="akazi-reveal rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-6" aria-labelledby="topics-title">
             <h2 id="topics-title" className="text-2xl font-extrabold tracking-tight text-ink">
               What to write about
             </h2>
@@ -150,12 +151,12 @@ export default function ContactPage() {
         </div>
 
         <section className="mt-14" aria-labelledby="faq-title">
-          <h2 id="faq-title" className="text-3xl font-extrabold tracking-tight text-ink">
+          <h2 id="faq-title" className="akazi-wipe text-3xl font-extrabold tracking-tight text-ink">
             Common questions
           </h2>
           <dl className="mt-6 grid gap-4 md:grid-cols-2">
             {faqs.map((item) => (
-              <div key={item.q} className="rounded-2xl border border-line bg-card p-5">
+              <div key={item.q} className="akazi-reveal rounded-2xl border border-line bg-card p-5">
                 <dt className="text-base font-extrabold tracking-tight text-ink">{item.q}</dt>
                 <dd className="mt-2 text-sm leading-6 text-muted">{item.a}</dd>
               </div>

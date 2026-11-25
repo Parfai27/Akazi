@@ -144,3 +144,377 @@ body {
     transform: none;
   }
 }
+
+/* Fine film grain over the homepage hero's colour field. */
+.akazi-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+}
+
+@keyframes akazi-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.akazi-marquee-track {
+  animation: akazi-marquee 60s linear infinite;
+}
+
+.akazi-marquee:hover .akazi-marquee-track,
+.akazi-marquee:focus-within .akazi-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-marquee {
+    overflow-x: auto;
+  }
+
+  .akazi-marquee-track {
+    animation: none;
+  }
+}
+
+/* Homepage board: a cool mint field with faint terrace lines, carrying the hero's hills down the page. */
+.akazi-terrain {
+  /* Grey text sits straight on the mint here, so it is darkened to keep AA contrast. */
+  --muted: #566170;
+  background-color: #e6f0eb;
+  background-image:
+    radial-gradient(60rem 30rem at 100% 0%, rgba(245, 185, 66, 0.14), transparent 60%),
+    radial-gradient(50rem 40rem at 0% 30%, rgba(30, 107, 88, 0.1), transparent 65%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='36'%3E%3Cpath d='M0 18Q50 4 100 18T200 18' fill='none' stroke='%231e6b58' stroke-opacity='0.07' stroke-width='1.25'/%3E%3C/svg%3E");
+}
+
+@keyframes akazi-ping-kf {
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.akazi-ping {
+  animation: akazi-ping-kf 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes akazi-pulse-kf {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.akazi-pulse {
+  animation: akazi-pulse-kf 1.6s ease-in-out infinite;
+}
+
+@keyframes akazi-float-kf {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.akazi-float {
+  animation: akazi-float-kf 6s ease-in-out infinite;
+}
+
+.akazi-float-late {
+  animation-delay: -3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-ping,
+  .akazi-pulse,
+  .akazi-float {
+    animation: none;
+  }
+}
+
+/* "Browse by kind of work" spotlight. Phones: stacked photo rows with everything visible.
+   Wider screens: strips in one row; the pointed-at or focused strip (or the default one) opens wide in colour. */
+.akazi-kinds {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.akazi-kind {
+  height: 8.5rem;
+}
+
+.akazi-kind-rail,
+.akazi-kind-cta {
+  display: none;
+}
+
+.akazi-kind-body {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 1rem 1.1rem;
+  color: #fff;
+}
+
+@media (min-width: 768px) {
+  .akazi-kinds {
+    display: flex;
+    gap: 0.75rem;
+    height: 26rem;
+  }
+
+  .akazi-kind {
+    flex: 1 1 0;
+    min-width: 0;
+    height: auto;
+    transition: flex-grow 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .akazi-kind-photo {
+    filter: grayscale(0.85) brightness(0.75);
+    transform: scale(1.06);
+    transition:
+      filter 0.5s ease,
+      transform 0.8s ease;
+  }
+
+  .akazi-kind-rail {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-bottom: 1.25rem;
+    color: #fff;
+    transition: opacity 0.25s ease;
+  }
+
+  .akazi-kind-rail-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .akazi-kind-body {
+    width: 24rem;
+    max-width: 100%;
+    padding: 1.75rem;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.4s ease;
+  }
+
+  .akazi-kind-cta {
+    display: inline-flex;
+  }
+
+  /* Which strip is open: the one under the pointer or keyboard focus, else the default. */
+  .akazi-kind:is(:hover, :focus-within),
+  .akazi-kinds:not(:hover, :focus-within) .akazi-kind[data-open] {
+    flex-grow: 5;
+  }
+
+  .akazi-kind:is(:hover, :focus-within) .akazi-kind-photo,
+  .akazi-kinds:not(:hover, :focus-within) .akazi-kind[data-open] .akazi-kind-photo {
+    filter: none;
+    transform: scale(1);
+  }
+
+  .akazi-kind:is(:hover, :focus-within) .akazi-kind-rail,
+  .akazi-kinds:not(:hover, :focus-within) .akazi-kind[data-open] .akazi-kind-rail {
+    opacity: 0;
+  }
+
+  .akazi-kind:is(:hover, :focus-within) .akazi-kind-body,
+  .akazi-kinds:not(:hover, :focus-within) .akazi-kind[data-open] .akazi-kind-body {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0.15s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-kind,
+  .akazi-kind-photo,
+  .akazi-kind-rail,
+  .akazi-kind-body {
+    transition: none;
+  }
+}
+
+/* Motion. Everything here is switched off for people who ask for reduced motion. */
+
+/* Hero: one staggered rise when the page opens. Each piece sets its delay with --d. */
+@keyframes akazi-rise-kf {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+
+@keyframes akazi-rise-soft-kf {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+.akazi-hero-enter .akazi-rise {
+  animation: akazi-rise-kf 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+}
+
+.akazi-hero-enter .akazi-rise-soft {
+  animation-name: akazi-rise-soft-kf;
+  animation-duration: 0.9s;
+}
+
+/* Blocks further down rise into place as they scroll into view. Browsers without scroll-driven animations simply
+   show them. `translate` is used rather than `transform` so the cards' hover lift keeps working. */
+@keyframes akazi-reveal-kf {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .akazi-reveal {
+    animation: akazi-reveal-kf linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+}
+
+/* Save star: a small pop when a role is saved. */
+@keyframes akazi-save-pop-kf {
+  40% {
+    scale: 1.35;
+    rotate: -12deg;
+  }
+}
+
+[data-akazi-save][aria-pressed="true"] svg {
+  animation: akazi-save-pop-kf 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+/* Back-to-top button: fades and lifts in once the page has been scrolled. */
+.akazi-top {
+  opacity: 0;
+  translate: 0 12px;
+  scale: 0.9;
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    translate 0.25s ease,
+    scale 0.25s ease,
+    background-color 0.15s ease;
+}
+
+.akazi-top-shown {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-hero-enter .akazi-rise,
+  .akazi-reveal,
+  [data-akazi-save][aria-pressed="true"] svg {
+    animation: none;
+  }
+
+  .akazi-top {
+    transition: none;
+  }
+}
+
+/* Headline: each word rises from behind its own mask. The mask is padded so descenders (y, g) are not clipped. */
+.akazi-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  vertical-align: top;
+}
+
+.akazi-mask-in {
+  display: inline-block;
+}
+
+@keyframes akazi-mask-kf {
+  from {
+    translate: 0 105%;
+  }
+}
+
+.akazi-hero-enter .akazi-mask-in {
+  animation: akazi-mask-kf 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) both;
+}
+
+@supports (animation-timeline: scroll()) {
+  /* Hero photo drifts down as the page scrolls up, so it moves slower than the content: a light parallax. */
+  @keyframes akazi-parallax-kf {
+    to {
+      translate: 0 7rem;
+    }
+  }
+
+  .akazi-parallax {
+    animation: akazi-parallax-kf linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  /* Kind-of-work strips open from the bottom, each a beat after the one before. */
+  @keyframes akazi-wipe-up-kf {
+    from {
+      clip-path: inset(100% -6px -6px -6px round 1rem);
+    }
+    to {
+      /* A little past the edge so the active strip's amber outline is not clipped. */
+      clip-path: inset(-6px round 1rem);
+    }
+  }
+
+  .akazi-wipe-up {
+    animation: akazi-wipe-up-kf linear both;
+    animation-timeline: view();
+    animation-range: entry calc(5% + var(--i, 0) * 6%) entry calc(60% + var(--i, 0) * 6%);
+  }
+
+  /* Section headings wipe in from the left as they are reached. */
+  @keyframes akazi-wipe-kf {
+    from {
+      clip-path: inset(-0.2em 100% -0.2em -0.2em);
+    }
+    to {
+      clip-path: inset(-0.2em);
+    }
+  }
+
+  .akazi-wipe {
+    animation: akazi-wipe-kf linear both;
+    animation-timeline: view();
+    animation-range: entry 20% entry 90%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .akazi-hero-enter .akazi-mask-in,
+  .akazi-parallax,
+  .akazi-wipe-up,
+  .akazi-wipe {
+    animation: none;
+  }
+}

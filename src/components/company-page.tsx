@@ -1,28 +1,24 @@
 import type { ReactNode } from "react";
+import { PageHero } from "@/components/page-hero";
 import { CONTACT_EMAIL, LEGAL_UPDATED_ISO, LEGAL_UPDATED_LABEL } from "@/lib/site";
 
 export function CompanyHero({
   eyebrow,
   title,
   lede,
+  photo,
   children,
 }: {
   eyebrow: string;
   title: string;
   lede: string;
+  photo?: { src: string; position?: string };
   children?: ReactNode;
 }) {
   return (
-    <section className="border-b border-line bg-card">
-      <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-8 sm:px-6 sm:pt-16 sm:pb-12">
-        <p className="text-sm font-semibold text-forest">{eyebrow}</p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-ink sm:text-5xl sm:leading-[1.08]">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-muted sm:text-lg sm:leading-8">{lede}</p>
-        {children ? <div className="mt-6">{children}</div> : null}
-      </div>
-    </section>
+    <PageHero crumbs={[{ label: eyebrow }]} title={title} lede={lede} photo={photo}>
+      {children}
+    </PageHero>
   );
 }
 
@@ -32,7 +28,7 @@ export function IconBadge({ children }: { children: ReactNode }) {
   );
 }
 
-const card = "rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]";
+const card = "akazi-reveal rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]";
 
 export function FeatureCard({
   icon,
@@ -74,11 +70,11 @@ export function LegalLayout({
   sections: { id: string; title: string; body: ReactNode }[];
 }) {
   return (
-    <main className="bg-wash">
+    <main className="akazi-terrain">
       <CompanyHero eyebrow={eyebrow} title={title} lede={lede}>
-        <p className="text-sm font-medium text-muted">
+        <p className="text-sm font-medium text-[#d6e8e0]">
           Last updated{" "}
-          <time dateTime={LEGAL_UPDATED_ISO} className="font-semibold text-ink">
+          <time dateTime={LEGAL_UPDATED_ISO} className="font-semibold text-white">
             {LEGAL_UPDATED_LABEL}
           </time>
         </p>
@@ -91,7 +87,7 @@ export function LegalLayout({
               <li key={section.id} className="max-w-full">
                 <a
                   href={`#${section.id}`}
-                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest lg:w-full lg:rounded-lg lg:border-0 lg:bg-transparent lg:px-2 lg:py-1.5"
+                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-card px-3 py-2 text-sm font-semibold text-ink hover:border-forest hover:text-forest focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest lg:w-full lg:rounded-xl lg:border-transparent lg:bg-transparent lg:px-3 lg:py-2 lg:hover:bg-card"
                 >
                   <span className="text-xs font-bold text-forest tabular-nums">{index + 1}</span>
                   {section.title}
@@ -100,9 +96,14 @@ export function LegalLayout({
             ))}
           </ol>
         </nav>
-        <article className="space-y-10">
+        <article className="space-y-6">
           {sections.map((section) => (
-            <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className={LEGAL_SECTIONS_CLASS}>
+            <section
+              key={section.id}
+              id={section.id}
+              aria-labelledby={`${section.id}-title`}
+              className={`akazi-reveal rounded-2xl border border-line bg-card p-6 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-8 ${LEGAL_SECTIONS_CLASS}`}
+            >
               <h2 id={`${section.id}-title`} className="text-2xl font-extrabold tracking-tight text-ink">
                 {section.title}
               </h2>

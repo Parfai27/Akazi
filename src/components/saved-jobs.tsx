@@ -21,6 +21,7 @@ export function SaveJobButton({ job, variant = "full" }: { job: StoredJob; varia
       type="button"
       onClick={() => toggleSaved(job)}
       aria-pressed={saved}
+      data-akazi-save=""
       aria-label={variant === "icon" ? (saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`) : undefined}
       className={
         variant === "icon"

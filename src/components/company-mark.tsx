@@ -10,17 +10,17 @@ export function CompanyMark({
 }: {
   name: string;
   website?: string;
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }) {
   const logo = companyLogo(name) ?? employerIcon(website);
   const [failedSrc, setFailedSrc] = useState("");
   const failed = Boolean(logo && failedSrc === logo.src);
-  const box = size === "lg" ? "size-14 rounded-2xl" : "size-12 rounded-xl";
+  const box = size === "lg" ? "size-14 rounded-2xl" : size === "sm" ? "size-7 rounded-lg text-xs" : "size-12 rounded-xl";
   const letter = name.trim().charAt(0).toUpperCase() || "A";
 
   if (!logo || failed) {
     return (
-      <span className={`inline-flex shrink-0 items-center justify-center bg-forest text-lg font-bold text-card ${box}`}>
+      <span className={`inline-flex shrink-0 items-center justify-center bg-forest font-bold text-card ${size === "sm" ? "" : "text-lg"} ${box}`}>
         {letter}
       </span>
     );
@@ -29,7 +29,7 @@ export function CompanyMark({
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center overflow-hidden border border-line ${
-        logo.bg ? "" : logo.cover ? "bg-[#0b2f6b]" : "bg-white p-1.5"
+        logo.bg ? "" : logo.cover ? "bg-[#0b2f6b]" : size === "sm" ? "bg-white p-0.5" : "bg-white p-1.5"
       } ${box}`}
       style={logo.bg ? { backgroundColor: logo.bg } : undefined}
     >

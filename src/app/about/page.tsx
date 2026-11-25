@@ -35,8 +35,9 @@ export default async function AboutPage() {
   ];
 
   return (
-    <main className="bg-wash">
+    <main className="akazi-terrain">
       <CompanyHero
+        photo={{ src: "/people/hero-kigali-night.jpg", position: "center 95%" }}
         eyebrow="About"
         title="A job board for work in Rwanda."
         lede="Akazi collects openings that employers have already published, and puts them in one place. The name is the Kinyarwanda word for work."
@@ -44,7 +45,7 @@ export default async function AboutPage() {
 
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <section aria-labelledby="mission-title">
-          <h2 id="mission-title" className="max-w-2xl text-3xl font-extrabold tracking-tight text-ink">
+          <h2 id="mission-title" className="akazi-wipe max-w-2xl text-3xl font-extrabold tracking-tight text-ink">
             One list, instead of dozens of career sites.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
@@ -56,7 +57,7 @@ export default async function AboutPage() {
 
         <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {figures.map((item) => (
-            <div key={item.label} className="rounded-2xl border border-line bg-card px-4 py-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]">
+            <div key={item.label} className="akazi-reveal rounded-2xl border border-line bg-card px-4 py-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]">
               <dt className="text-sm font-semibold text-muted">{item.label}</dt>
               <dd className="mt-2 text-3xl font-extrabold tracking-tight text-ink tabular-nums">
                 {item.value.toLocaleString("en")}
@@ -70,7 +71,7 @@ export default async function AboutPage() {
         </p>
 
         <section className="mt-14" aria-labelledby="values-title">
-          <h2 id="values-title" className="text-3xl font-extrabold tracking-tight text-ink">
+          <h2 id="values-title" className="akazi-wipe text-3xl font-extrabold tracking-tight text-ink">
             What Akazi is, and is not
           </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -114,12 +115,12 @@ export default async function AboutPage() {
         </section>
 
         <section className="mt-14" aria-labelledby="steps-title">
-          <h2 id="steps-title" className="text-3xl font-extrabold tracking-tight text-ink">
+          <h2 id="steps-title" className="akazi-wipe text-3xl font-extrabold tracking-tight text-ink">
             How it works
           </h2>
           <ol className="mt-6 grid gap-4 lg:grid-cols-3">
             {steps.map((step, index) => (
-              <li key={step.title} className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]">
+              <li key={step.title} className="akazi-reveal rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)]">
                 <span className="inline-flex size-9 items-center justify-center rounded-full bg-forest text-sm font-extrabold text-card">
                   {index + 1}
                 </span>
