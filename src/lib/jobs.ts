@@ -173,6 +173,21 @@ export async function getPublicStats(): Promise<PublicStats> {
   };
 }
 
+/** When the crawler last finished a run, so pages can say how fresh the openings are. */
+export async function getLastUpdate(): Promise<string | null> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("jobs");
+  const run = db
+    .select({ finishedAt: crawlRuns.finishedAt })
+    .from(crawlRuns)
+    .where(sql`${crawlRuns.finishedAt} is not null`)
+    .orderBy(desc(crawlRuns.finishedAt))
+    .limit(1)
+    .get();
+  return run?.finishedAt ?? null;
+}
+
 export async function getBoard(input: Partial<JobFilters>): Promise<BoardModel> {
   return readBoard(normalizeFilters(input));
 }

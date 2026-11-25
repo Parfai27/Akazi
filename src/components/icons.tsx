@@ -7,9 +7,9 @@ export function SearchIcon({ className = "size-4 shrink-0" }: { className?: stri
   );
 }
 
-export function BellIcon() {
+export function BellIcon({ className = "size-4 shrink-0" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className="size-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" strokeLinejoin="round" />
       <path d="M9.5 17a2.5 2.5 0 0 0 5 0" />
     </svg>

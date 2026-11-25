@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HeroHills } from "@/components/hero-hills";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CompanyMark } from "@/components/company-mark";
@@ -74,14 +75,22 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
   const moreLikeThis = boardPath({ ...firstPageFilters(), fn, shelf: shelfOf(job) });
 
   return (
-    <article>
+    <article className="akazi-hero-enter akazi-terrain relative isolate pb-16">
       <ViewedTracker job={stored} />
-      <div className="sticky top-[4.5rem] z-20 bg-card print:hidden">
-        <div className="flex w-full items-center px-4 py-1 sm:px-8">
+      {/* The same dark hills band as the other pages, sitting behind the top of the job card. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 overflow-hidden bg-linear-to-b from-[#081a15] via-[#0d2b24] to-[#14463a] print:hidden sm:h-80"
+      >
+        <div className="akazi-grain absolute inset-0" />
+        <HeroHills className="h-16 sm:h-24" />
+      </div>
+      <div className="pointer-events-none sticky top-[4.5rem] z-20 print:hidden">
+        <div className="flex w-full items-center px-4 py-2 sm:px-8">
           <Link
             href="/"
             aria-label="Back to openings"
-            className="inline-flex size-11 items-center justify-center rounded-full bg-forest text-card hover:bg-forest-deep"
+            className="pointer-events-auto inline-flex size-11 items-center justify-center rounded-full bg-[#f5b942] text-ink shadow-[0_10px_24px_rgba(6,30,24,0.35)] hover:bg-[#f0aa22]"
           >
             <ArrowLeftIcon />
           </Link>
@@ -90,7 +99,7 @@ export default async function JobPage({ params }: { params: Promise<Params> }) {
 
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">
-          <header className="rounded-2xl border border-line bg-card p-5 shadow-[0_8px_24px_rgba(30,107,88,0.06)] sm:p-6">
+          <header className="akazi-rise rounded-[1.75rem] border border-line bg-card p-5 shadow-[0_24px_60px_rgba(8,26,21,0.25)] sm:p-7">
             <div className="flex min-w-0 items-start gap-4">
               <CompanyMark name={job.company} website={job.applyUrl} size="lg" />
               <div className="min-w-0 flex-1">

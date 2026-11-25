@@ -23,7 +23,11 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
   if (!guide || !Body) notFound();
 
   return (
-    <ProsePage eyebrow="Guide" title={guide.title} lede={guide.lede}>
+    <ProsePage
+      crumbs={[{ label: "Guides", href: "/guides" }, { label: guide.title }]}
+      title={guide.title}
+      lede={guide.lede}
+    >
       <Body />
       <p className="pt-4">
         <Link className="font-medium text-forest underline-offset-4 hover:underline" href="/guides">
