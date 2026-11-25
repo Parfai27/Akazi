@@ -2,7 +2,7 @@
 
 Openings in Rwanda, gathered from public company career pages. Browse on Akazi, then apply on the employer’s site.
 
-Live site: https://akazi-u968.onrender.com
+Official site: [akazi.co.rw](https://akazi.co.rw)
 
 ## Run it locally
 
